@@ -30,6 +30,7 @@
 #include <tvm/ir/expr.h>
 #include <tvm/ir/type.h>
 #include <tvm/ir/type_relation.h>
+#include <tvm/node/registry_attr_map.h>
 #include <tvm/runtime/registry.h>
 
 #include <string>
@@ -41,7 +42,6 @@ namespace tvm {
 // forward declare name.
 template <typename ValueType>
 class OpMap;
-class GenericOpMap;
 class OpRegistry;
 
 // TODO(tvm-team): migrate low-level intrinsics to use Op
@@ -126,8 +126,13 @@ class OpNode : public RelayExprNode {
   TVM_DECLARE_FINAL_OBJECT_INFO(OpNode, RelayExprNode);
 
  private:
+  /*! \return the internal attr registry index. */
+  uint32_t registry_index() const {
+    return index_;
+  }
   // friend class
-  friend class GenericOpMap;
+  template<typename T>
+  friend class GenericRegistryAttrMap;
   friend class OpRegistry;
   friend bool IsPrimitiveOp(const RelayExpr&);
   // Program internal unique index of operator.
@@ -196,7 +201,7 @@ class Op : public RelayExpr {
    * \param key The attribute key
    * \return reference to GenericOpMap
    */
-  TVM_DLL static const GenericOpMap& GetGenericAttr(const String& key);
+  TVM_DLL static const GenericRegistryAttrMap<Op>& GetGenericAttr(const String& key);
   /*!
    * \brief Checks if the key is present in the registry
    * \param key The attribute key
@@ -303,83 +308,21 @@ class OpRegistry {
   // return internal pointer to op.
   inline OpNode* get();
   // update the attribute OpMap
-
   TVM_DLL void UpdateAttr(const String& key, runtime::TVMRetValue value, int plevel);
 };
 
-/*!
- * \brief Generic map to store additional information of Op.
- */
-class GenericOpMap {
- public:
-  /*!
-   * \brief Check if the map has op as key.
-   * \param op The key to the map
-   * \return 1 if op is contained in map, 0 otherwise.
-   */
-  inline int count(const Op& op) const;
-  /*!
-   * \brief get the corresponding value element at op
-   * \param op The key to the map
-   * \return the const reference to the content value.
-   */
-  inline const runtime::TVMRetValue& operator[](const Op& op) const;
-  /*!
-   * \brief get the corresponding value element at op with default value.
-   * \param op The key to the map
-   * \param def_value The default value when the key does not exist.
-   * \return the const reference to the content value.
-   * \tparam ValueType The content value type.
-   */
-  template <typename ValueType>
-  inline ValueType get(const Op& op, ValueType def_value) const;
-  /*!
-   * \brief get the corresponding value element at op with default value.
-   * \param expr The key to the map
-   * \param def_value The default value when the key does not exist
-   *         or if expr is not an Op.
-   * \return the const reference to the content value.
-   * \tparam ValueType The content value type.
-   */
-  template <typename ValueType>
-  inline ValueType get(const RelayExpr& expr, ValueType def_value) const;
-
- private:
-  friend class OpRegistry;
-  // the attribute field.
-  std::string attr_name_;
-  // internal data
-  std::vector<std::pair<runtime::TVMRetValue, int> > data_;
-  // The value
-  GenericOpMap() = default;
-};
 
 /*!
  * \brief Map<Op,ValueType> used to store meta-information about Op.
  * \tparam ValueType The type of the value stored in map.
  */
 template <typename ValueType>
-class OpMap {
+class OpMap : public RegistryAttrMap<Op, ValueType> {
  public:
-  /*!
-   * \brief Check if the map has op as key.
-   * \param op The key to the map
-   * \return 1 if op is contained in map, 0 otherwise.
-   */
-  inline int count(const Op& op) const;
-  /*!
-   * \brief get the corresponding value element at op
-   * \param op The key to the map
-   * \return the const reference to the content value.
-   */
-  inline ValueType operator[](const Op& op) const;
-  /*!
-   * \brief get the corresponding value element at op with default value.
-   * \param op The key to the map
-   * \param def_value The default value when the key does not exist.
-   * \return the const reference to the content value.
-   */
-  inline ValueType get(const Op& op, ValueType def_value) const;
+  using TParent = RegistryAttrMap<Op, ValueType>;
+  using TParent::get;
+  using TParent::count;
+  using TParent::operator[];
   /*!
    * \brief get the corresponding value element at op with default value.
    * \param expr The key to the map
@@ -392,9 +335,8 @@ class OpMap {
  private:
   friend class Op;
   // constructor
-  explicit OpMap(const GenericOpMap& map) : map_(map) {}
-  /*! \brief The internal map field */
-  const GenericOpMap& map_;
+  explicit OpMap(const GenericRegistryAttrMap<Op>& map)
+      : TParent(map) {}
 };
 
 #define TVM_STRINGIZE_DETAIL(x) #x
@@ -536,67 +478,15 @@ inline OpRegistry& OpRegistry::set_attr(  // NOLINT(*)
 }
 
 // member functions of OpMap
-inline int GenericOpMap::count(const Op& op) const {
-  if (op.defined()) {
-    const uint32_t idx = op->index_;
-    return idx < data_.size() ? (data_[idx].second != 0) : 0;
-  } else {
-    return 0;
-  }
-}
-
-inline const runtime::TVMRetValue& GenericOpMap::operator[](const Op& op) const {
-  CHECK(op.defined());
-  const uint32_t idx = op->index_;
-  CHECK(idx < data_.size() && data_[idx].second != 0)
-      << "Attribute " << attr_name_ << " has not been registered for Operator " << op->name;
-  return data_[idx].first;
-}
-
-template <typename ValueType>
-inline ValueType GenericOpMap::get(const Op& op, ValueType value) const {
-  CHECK(op.defined());
-  const uint32_t idx = op->index_;
-  if (idx < data_.size() && data_[idx].second != 0) {
-    return data_[idx].first;
-  } else {
-    return value;
-  }
-}
-
-template <typename ValueType>
-inline ValueType GenericOpMap::get(const RelayExpr& expr, ValueType value) const {
-  CHECK(expr.defined());
-  if (const OpNode* op = expr.as<OpNode>()) {
-    const uint32_t idx = op->index_;
-    if (idx < data_.size() && data_[idx].second != 0) {
-      return data_[idx].first;
-    } else {
-      return value;
-    }
-  } else {
-    return value;
-  }
-}
-
-template <typename ValueType>
-inline int OpMap<ValueType>::count(const Op& op) const {
-  return map_.count(op);
-}
-
-template <typename ValueType>
-inline ValueType OpMap<ValueType>::operator[](const Op& op) const {
-  return map_[op];
-}
-
-template <typename ValueType>
-inline ValueType OpMap<ValueType>::get(const Op& op, ValueType def_value) const {
-  return map_.get<ValueType>(op, def_value);
-}
 
 template <typename ValueType>
 inline ValueType OpMap<ValueType>::get(const RelayExpr& expr, ValueType def_value) const {
-  return map_.get<ValueType>(expr, def_value);
+  CHECK(expr.defined());
+  if (const OpNode* op = expr.as<OpNode>()) {
+    return this->map_.get(GetRef<Op>(op), def_value);
+  } else {
+    return def_value;
+  }
 }
 
 /*!
