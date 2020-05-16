@@ -132,7 +132,7 @@ class OpNode : public RelayExprNode {
   }
   // friend class
   template<typename T>
-  friend class GenericRegistryAttrMap;
+  friend class GenericAttrRegistryMap;
   friend class OpRegistry;
   friend bool IsPrimitiveOp(const RelayExpr&);
   // Program internal unique index of operator.
@@ -201,7 +201,7 @@ class Op : public RelayExpr {
    * \param key The attribute key
    * \return reference to GenericOpMap
    */
-  TVM_DLL static const GenericRegistryAttrMap<Op>& GetGenericAttr(const String& key);
+  TVM_DLL static const GenericAttrRegistryMap<Op>& GetGenericAttr(const String& key);
   /*!
    * \brief Checks if the key is present in the registry
    * \param key The attribute key
@@ -317,12 +317,8 @@ class OpRegistry {
  * \tparam ValueType The type of the value stored in map.
  */
 template <typename ValueType>
-class OpMap : public RegistryAttrMap<Op, ValueType> {
+class OpMap : public AttrRegistryMap<Op, ValueType> {
  public:
-  using TParent = RegistryAttrMap<Op, ValueType>;
-  using TParent::get;
-  using TParent::count;
-  using TParent::operator[];
   /*!
    * \brief get the corresponding value element at op with default value.
    * \param expr The key to the map
@@ -332,10 +328,14 @@ class OpMap : public RegistryAttrMap<Op, ValueType> {
    */
   inline ValueType get(const RelayExpr& expr, ValueType def_value) const;
 
+  using TParent = AttrRegistryMap<Op, ValueType>;
+  using TParent::get;
+  using TParent::count;
+  using TParent::operator[];
  private:
   friend class Op;
   // constructor
-  explicit OpMap(const GenericRegistryAttrMap<Op>& map)
+  explicit OpMap(const GenericAttrRegistryMap<Op>& map)
       : TParent(map) {}
 };
 

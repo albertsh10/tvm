@@ -17,11 +17,11 @@
  * under the License.
  */
 /*!
- * \file tvm/node/registry_attr_map.h
+ * \file tvm/node/attr_registry_map.h
  * \brief Attribute map used in registry.
  */
-#ifndef TVM_NODE_REGISTRY_ATTR_MAP_H_
-#define TVM_NODE_REGISTRY_ATTR_MAP_H_
+#ifndef TVM_NODE_ATTR_REGISTRY_MAP_H_
+#define TVM_NODE_ATTR_REGISTRY_MAP_H_
 
 namespace tvm {
 
@@ -30,7 +30,7 @@ namespace tvm {
  * \tparam KeyType the type of the key.
  */
 template<typename KeyType>
-class GenericRegistryAttrMap {
+class GenericAttrRegistryMap {
  public:
   /*!
    * \brief Check if the map has key.
@@ -83,7 +83,7 @@ class GenericRegistryAttrMap {
   /*! \brief The internal data. */
   std::vector<std::pair<runtime::TVMRetValue, int>> data_;
   /*! \brief The constructor */
-  GenericRegistryAttrMap() = default;
+  GenericAttrRegistryMap() = default;
   friend class OpRegistry;
 };
 
@@ -93,13 +93,13 @@ class GenericRegistryAttrMap {
  * \tparam ValueType The type of the value stored in map.
  */
 template <typename KeyType, typename ValueType>
-class RegistryAttrMap {
+class AttrRegistryMap {
  public:
   /*!
    * \brief constructor
    * \param map The internal map.
    */
-  explicit RegistryAttrMap(const GenericRegistryAttrMap<KeyType>& map) : map_(map) {}
+  explicit AttrRegistryMap(const GenericAttrRegistryMap<KeyType>& map) : map_(map) {}
   /*!
    * \brief Check if the map has op as key.
    * \param key The key to the map
@@ -128,7 +128,7 @@ class RegistryAttrMap {
 
  protected:
   /*! \brief The internal map field */
-  const GenericRegistryAttrMap<KeyType>& map_;
+  const GenericAttrRegistryMap<KeyType>& map_;
 };
 
 }  // namespace tvm

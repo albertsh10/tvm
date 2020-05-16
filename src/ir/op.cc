@@ -37,7 +37,7 @@ DMLC_REGISTRY_ENABLE(::tvm::OpRegistry);
 
 namespace tvm {
 
-using GenericOpMap = GenericRegistryAttrMap<Op>;
+using GenericOpMap = GenericAttrRegistryMap<Op>;
 
 using runtime::PackedFunc;
 using runtime::TVMArgs;
