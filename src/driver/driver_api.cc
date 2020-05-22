@@ -119,6 +119,12 @@ transform::Pass Filter(FCond fcond) {
   return tir::transform::CreatePrimFuncPass(fpass, 0, "Filter", {});
 }
 
+
+// R5Begister build pipeline related options
+TVM_REGISTER_PASS_CONFIG_OPTION("tir.noalias", Bool::ContainerType);
+TVM_REGISTER_PASS_CONFIG_OPTION("tir.instrument_bound_checkers", Bool::ContainerType);
+
+
 IRModule lower(te::Schedule sch, const Array<te::Tensor>& args, const std::string& name,
                const std::unordered_map<te::Tensor, tir::Buffer>& binds,
                const BuildConfig& config) {
@@ -155,9 +161,7 @@ IRModule lower(te::Schedule sch, const Array<te::Tensor>& args, const std::strin
   pass_list.push_back(tir::transform::InjectVirtualThread());
   pass_list.push_back(tir::transform::InjectDoubleBuffer(config->double_buffer_split_loop));
   pass_list.push_back(tir::transform::StorageRewrite());
-  pass_list.push_back(
-      tir::transform::UnrollLoop(config->auto_unroll_max_step, config->auto_unroll_max_depth,
-                                 config->auto_unroll_max_extent, config->unroll_explicit));
+  pass_list.push_back(tir::transform::UnrollLoop());
   // Phase 2
   pass_list.push_back(tir::transform::Simplify());
   pass_list.push_back(tir::transform::RemoveNoOp());
