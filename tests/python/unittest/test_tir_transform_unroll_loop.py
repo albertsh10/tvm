@@ -44,7 +44,7 @@ def test_unroll_loop():
         assert isinstance(ret, tvm.tir.For)
 
     with tvm.transform.PassContext(config={
-            "tir.UnrollLoop": {"auto_max_step": 16, "explicit_unroll": True}
+            "tir.UnrollLoop": {"auto_max_step": 16, "explicit_unroll": False}
     }):
         ret = tvm.tir.transform.UnrollLoop()(mod)["main"].body
         assert isinstance(ret, tvm.tir.For)
