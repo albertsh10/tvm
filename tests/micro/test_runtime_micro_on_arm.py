@@ -26,7 +26,7 @@ from tvm.micro import create_micro_mod
 from tvm.relay.testing import resnet
 
 # Use real micro device - an STM32F746 discovery board
-# SETUP: 
+# SETUP:
 # Be sure to have openocd installed and running
 # Ex : openocd -f board/stm32f7discovery.cfg
 # Be sure to have the ST CMSIS library downloaded, installed and
@@ -76,7 +76,7 @@ break UTVMDone
 def reset_gdbinit():
     if 'server_port' not in DEV_CONFIG_A:
         return
-    try: 
+    try:
         gdb_init_dir = os.environ['MICRO_GDB_INIT_DIR']
     except KeyError:
         return

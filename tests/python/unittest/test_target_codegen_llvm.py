@@ -191,8 +191,7 @@ def test_llvm_add_pipeline():
         tvm.testing.assert_allclose(
             c.asnumpy(), a.asnumpy() + b.asnumpy())
 
-    with tvm.target.build_config(offset_factor=4):
-        check_llvm()
+    check_llvm()
 
 
 def test_llvm_persist_parallel():
