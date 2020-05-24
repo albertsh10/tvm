@@ -355,9 +355,7 @@ TVM_REGISTER_NODE_TYPE(BuildConfigNode);
 
 TVM_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     .set_dispatch<BuildConfigNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const BuildConfigNode*>(node.get());
       p->stream << "build_config(";
-      p->stream << "partition_const_loop=" << op->partition_const_loop << ", ";
       p->stream << ")";
     });
 
