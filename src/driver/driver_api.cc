@@ -95,8 +95,7 @@ tir::Buffer BufferWithOffsetAlignment(Array<PrimExpr> shape, DataType dtype, std
 
 void GetBinds(const Array<te::Tensor>& args, bool compact,
               const std::unordered_map<te::Tensor, tir::Buffer>& binds,
-              Map<te::Tensor, tir::Buffer>* out_binds, Array<ObjectRef>* out_arg_list,
-              const BuildConfig& config) {
+              Map<te::Tensor, tir::Buffer>* out_binds, Array<ObjectRef>* out_arg_list) {
   *out_binds = binds;
 
   for (const auto& x : args) {
@@ -130,8 +129,7 @@ transform::Pass Filter(FCond fcond) {
 }
 
 IRModule lower(te::Schedule sch, const Array<te::Tensor>& args, const std::string& name,
-               const std::unordered_map<te::Tensor, tir::Buffer>& binds,
-               const BuildConfig& config) {
+               const std::unordered_map<te::Tensor, tir::Buffer>& binds) {
   Array<ObjectRef> out_arg_list;
   auto pass_ctx = transform::PassContext::Current();
 
@@ -143,7 +141,7 @@ IRModule lower(te::Schedule sch, const Array<te::Tensor>& args, const std::strin
   bool compact = te::VerifyCompactBuffer(stmt);
 
   Map<te::Tensor, tir::Buffer> out_binds;
-  GetBinds(args, compact, binds, &out_binds, &out_arg_list, config);
+  GetBinds(args, compact, binds, &out_binds, &out_arg_list);
 
   // build the function
   tir::PrimFunc f = te::SchedulePostProcToPrimFunc(out_arg_list, std::move(stmt), out_binds);
@@ -251,8 +249,7 @@ std::pair<IRModule, IRModule> SplitDevHostFuncs(IRModule mod_mixed, const Target
 }
 
 // Build for heterogeneous execution.
-runtime::Module build(const Map<Target, IRModule>& inputs, const Target& target_host,
-                      const BuildConfig& config) {
+runtime::Module build(const Map<Target, IRModule>& inputs, const Target& target_host) {
   auto pass_ctx = transform::PassContext::Current();
 
   std::vector<runtime::Module> device_modules;
@@ -294,8 +291,7 @@ runtime::Module build(const Map<Target, IRModule>& inputs, const Target& target_
 }
 
 // Build for heterogeneous execution when target is a string.
-runtime::Module build(const Map<std::string, IRModule>& inputs, const Target& target_host,
-                      const BuildConfig& config) {
+runtime::Module build(const Map<std::string, IRModule>& inputs, const Target& target_host) {
   Map<Target, IRModule> updated_input;
   for (const auto& it : inputs) {
     auto target = Target::Create(it.first);
@@ -304,14 +300,13 @@ runtime::Module build(const Map<std::string, IRModule>& inputs, const Target& ta
     }
     updated_input.Set(target, it.second);
   }
-  return build(updated_input, target_host, config);
+  return build(updated_input, target_host);
 }
 
 // Build for homogeneous execution.
-runtime::Module build(const IRModule& funcs, const Target& target, const Target& target_host,
-                      const BuildConfig& config) {
+runtime::Module build(const IRModule& funcs, const Target& target, const Target& target_host) {
   Map<Target, IRModule> inputs = {{target, funcs}};
-  return build(inputs, target_host, config);
+  return build(inputs, target_host);
 }
 
 }  // namespace tvm
