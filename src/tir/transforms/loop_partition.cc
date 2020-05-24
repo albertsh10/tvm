@@ -38,10 +38,10 @@ namespace tvm {
 namespace tir {
 
 struct LoopPartitionConfigNode : public tvm::AttrsNode<LoopPartitionConfigNode> {
-  bool split_const_loop;
+  bool partition_const_loop;
 
   TVM_DECLARE_ATTRS(LoopPartitionConfigNode, "tir.transform.LoopPartitionConfig") {
-    TVM_ATTR_FIELD(split_const_loop)
+    TVM_ATTR_FIELD(partition_const_loop)
         .describe("Split constant loop")
         .set_default(false);
   }
@@ -93,11 +93,11 @@ bool ExprUseVars(PrimExpr expr, const std::unordered_set<const VarNode*>& vars) 
 class CandidateSelector final : public StmtExprVisitor {
  public:
   using VarIsUsed = bool;
-  explicit CandidateSelector(bool split_const_loop) : split_const_loop_(split_const_loop) {}
+  explicit CandidateSelector(bool partition_const_loop) : partition_const_loop_(partition_const_loop) {}
 
   void VisitStmt_(const ForNode* op) final {
-    // partition const loop when sets split_const_loop_
-    if (!is_const(op->min) || !is_const(op->extent) || split_const_loop_) {
+    // partition const loop when sets partition_const_loop_
+    if (!is_const(op->min) || !is_const(op->extent) || partition_const_loop_) {
       const VarNode* var = op->loop_var.get();
       record_.insert({var, false});
       StmtExprVisitor::VisitStmt_(op);
@@ -116,7 +116,7 @@ class CandidateSelector final : public StmtExprVisitor {
       CHECK(iv);
       Var var = iv->var;
       runtime::ThreadScope scope = runtime::ThreadScope::make(iv->thread_tag);
-      if ((scope.rank == 0) && (!is_const(op->value) || split_const_loop_)) {
+      if ((scope.rank == 0) && (!is_const(op->value) || partition_const_loop_)) {
         record_.insert({var.get(), false});
         StmtExprVisitor::VisitStmt_(op);
         if (record_.at(var.get()) && !no_split_) {
@@ -166,7 +166,7 @@ class CandidateSelector final : public StmtExprVisitor {
  private:
   bool in_likely_{false};
   bool no_split_{false};
-  bool split_const_loop_{false};
+  bool partition_const_loop_{false};
   std::unordered_map<const VarNode*, VarIsUsed> record_;
 };
 
@@ -326,7 +326,7 @@ class ThreadPartitionInserter : public StmtMutator {
 // likely conditions
 class LoopPartitioner : public StmtMutator {
  public:
-  explicit LoopPartitioner(bool split_const_loop) : selector(CandidateSelector(split_const_loop)) {}
+  explicit LoopPartitioner(bool partition_const_loop) : selector(CandidateSelector(partition_const_loop)) {}
 
   Stmt VisitAndMutate(Stmt stmt) {
     selector(stmt);
@@ -606,8 +606,8 @@ class RemoveLikelyTags : public StmtExprMutator {
   }
 };
 
-Stmt LoopPartition(Stmt stmt, bool split_const_loop) {
-  stmt = LoopPartitioner(split_const_loop).VisitAndMutate(std::move(stmt));
+Stmt LoopPartition(Stmt stmt, bool partition_const_loop) {
+  stmt = LoopPartitioner(partition_const_loop).VisitAndMutate(std::move(stmt));
   stmt = RemoveLikelyTags()(std::move(stmt));
   return stmt;
 }
@@ -621,7 +621,7 @@ Pass LoopPartition() {
     if (!cfg.defined()) {
       cfg = AttrsWithDefaultValues<LoopPartitionConfig>();
     }
-    n->body = LoopPartition(std::move(n->body), cfg.value()->split_const_loop);
+    n->body = LoopPartition(std::move(n->body), cfg.value()->partition_const_loop);
     return f;
   };
   return CreatePrimFuncPass(pass_func, 0, "tir.LoopPartition", {});

@@ -60,7 +60,7 @@ def test_const_loop():
 
     mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([], stmt))
     with tvm.transform.PassContext(config={
-        "tir.LoopPartition": {"split_const_loop": True}
+        "tir.LoopPartition": {"partition_const_loop": True}
     }):
         mod = tvm.tir.transform.LoopPartition()(mod)
         stmt = tvm.tir.transform.Simplify()(mod)["main"].body
@@ -186,7 +186,7 @@ def test_condition_EQ():
 
     mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([m, n], stmt))
     with tvm.transform.PassContext(config={
-        "tir.LoopPartition": {"split_const_loop": True}
+        "tir.LoopPartition": {"partition_const_loop": True}
     }):
         mod = tvm.tir.transform.LoopPartition()(mod)
         stmt = tvm.tir.transform.Simplify()(mod)["main"].body
@@ -245,7 +245,7 @@ def test_single_likely():
     mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([], stmt))
 
     with tvm.transform.PassContext(config={
-        "tir.LoopPartition": {"split_const_loop": True}
+        "tir.LoopPartition": {"partition_const_loop": True}
     }):
         mod = tvm.tir.transform.LoopPartition()(mod)
         stmt = tvm.tir.transform.Simplify()(mod)["main"].body
@@ -273,7 +273,7 @@ def test_multi_likely():
     mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([], stmt))
 
     with tvm.transform.PassContext(config={
-        "tir.LoopPartition": {"split_const_loop": True}
+        "tir.LoopPartition": {"partition_const_loop": True}
     }):
         mod = tvm.tir.transform.LoopPartition()(mod)
         stmt = tvm.tir.transform.Simplify()(mod)["main"].body
@@ -308,7 +308,7 @@ def test_oneD_pool():
     mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([m, data, out], stmt))
 
     with tvm.transform.PassContext(config={
-        "tir.LoopPartition": {"split_const_loop": True}
+        "tir.LoopPartition": {"partition_const_loop": True}
     }):
         mod = tvm.tir.transform.LoopPartition()(mod)
         stmt = tvm.tir.transform.Simplify()(mod)["main"].body
@@ -335,9 +335,11 @@ def test_cce_loop_1():
   stmt = ib.get()
 
   mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([Ab, Bb], stmt))
-
-  mod = tvm.tir.transform.LoopPartition(True)(mod)
-  stmt = tvm.tir.transform.Simplify()(mod)["main"].body
+  with tvm.transform.PassContext(config={
+        "tir.LoopPartition": {"partition_const_loop": True}
+  }):
+    mod = tvm.tir.transform.LoopPartition()(mod)
+    stmt = tvm.tir.transform.Simplify()(mod)["main"].body
 
   assert(not any(collect_visit(stmt, lambda x: isinstance(x, tvm.tir.IfThenElse))))
 
@@ -357,10 +359,12 @@ def test_cce_loop_2():
 
   stmt = ib.get()
 
-
   mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([], stmt))
-  mod = tvm.tir.transform.LoopPartition(True)(mod)
-  stmt = tvm.tir.transform.Simplify()(mod)["main"].body
+  with tvm.transform.PassContext(config={
+      "tir.LoopPartition": {"partition_const_loop": True}
+  }):
+    mod = tvm.tir.transform.LoopPartition()(mod)
+    stmt = tvm.tir.transform.Simplify()(mod)["main"].body
 
   assert(not any(collect_visit(stmt, lambda x: isinstance(x, tvm.tir.IfThenElse))))
 
@@ -378,10 +382,13 @@ def test_cce_loop_3():
                 ib.emit(tvm.tir.call_extern('float16',"cce_intrisic",head1))
 
     stmt = ib.get()
-
     mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([], stmt))
-    mod = tvm.tir.transform.LoopPartition(True)(mod)
-    stmt = tvm.tir.transform.Simplify()(mod)["main"].body
+
+    with tvm.transform.PassContext(config={
+        "tir.LoopPartition": {"partition_const_loop": True}
+    }):
+        mod = tvm.tir.transform.LoopPartition()(mod)
+        stmt = tvm.tir.transform.Simplify()(mod)["main"].body
 
     assert(not any(collect_visit(stmt, lambda x: isinstance(x, tvm.tir.IfThenElse))))
 
@@ -413,8 +420,11 @@ def test_conv_tiling():
     stmt = tvm.te.schedule.ScheduleOps(s, bounds)
 
     mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([], stmt))
-    mod = tvm.tir.transform.LoopPartition(True)(mod)
-    stmt = tvm.tir.transform.Simplify()(mod)["main"].body
+    with tvm.transform.PassContext(config={
+        "tir.LoopPartition": {"partition_const_loop": True}
+    }):
+        mod = tvm.tir.transform.LoopPartition()(mod)
+        stmt = tvm.tir.transform.Simplify()(mod)["main"].body
 
     assert(not any(collect_visit(stmt, lambda x: isinstance(x, tvm.tir.IfThenElse))))
 
@@ -431,7 +441,9 @@ def test_multilevel_splitting_with_indivisble_factors():
     s[B].unroll(yi)
 
     ## But this does the right thing.
-    with tvm.target.build_config(partition_const_loop=True):
+    with tvm.transform.PassContext(config={
+        "tir.LoopPartition": {"partition_const_loop": True}
+    }):
         lowered_body = tvm.lower(s, [A, B], name="x")["x"].body
         def visit_stmt(op):
             return(isinstance(op, tvm.tir.Max))
@@ -452,7 +464,9 @@ def test_double_splitting_with_indivisible_factors():
     s[C].compute_at(s[D], do)
 
     target = 'llvm'
-    with tvm.target.build_config(partition_const_loop=True):
+    with tvm.transform.PassContext(config={
+        "tir.LoopPartition": {"partition_const_loop": True}
+    }):
         f = tvm.lower(s, [A, C, D], name="fadd1", simple_mode=False)
         func = tvm.build(f, target=target)
 
@@ -490,8 +504,11 @@ def test_simple_rfactor():
     mod1 = tvm.IRModule.from_expr(tvm.tir.PrimFunc([], stmt1))
     stmt1 = tvm.tir.transform.Simplify()(mod1)["main"].body
 
-    mod2 = tvm.tir.transform.LoopPartition(True)(mod1)
-    stmt2 = tvm.tir.transform.Simplify()(mod2)["main"].body
+    with tvm.transform.PassContext(config={
+        "tir.LoopPartition": {"partition_const_loop": True}
+    }):
+        mod2 = tvm.tir.transform.LoopPartition()(mod1)
+        stmt2 = tvm.tir.transform.Simplify()(mod2)["main"].body
 
     # make sure loop partition actually did something
     assert not tvm.ir.structural_equal(stmt1.body, stmt2.body)
