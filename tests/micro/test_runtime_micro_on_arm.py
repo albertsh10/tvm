@@ -54,9 +54,9 @@ def relay_micro_build(func, dev_config, params=None):
     mod : tvm.runtime.Module
         graph runtime module for the target device
     """
-    disable_vectorize = tvm.target.build_config(disable_vectorize=True)
-    disable_fusion = relay.build_config(disabled_pass={'FuseOps'})
-    with disable_vectorize, disable_fusion:
+    with tvm.transform.PassContext(disabled_pass={'FuseOps'}, config={
+        "tir.disable_vectorize": True
+    }):
         graph, c_mod, params = relay.build(func, target=TARGET, params=params)
     micro_mod = micro.create_micro_mod(c_mod, dev_config)
     ctx = tvm.micro_dev(0)
@@ -230,7 +230,9 @@ def test_conv2d():
     w_shape = list(map(lambda x: x.value, mod['main'].params[1].checked_type.shape))
     out_shape = list(map(lambda x: x.value, mod['main'].ret_type.shape))
 
-    with tvm.target.build_config(disable_vectorize=True):
+    with tvm.transform.PassContext(config={
+        "tir.disable_vectorize": True
+    }):
         graph, c_mod, params = relay.build(mod, target="c")
 
     with micro.Session(DEV_CONFIG_A):
