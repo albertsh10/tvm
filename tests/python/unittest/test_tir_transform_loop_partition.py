@@ -37,7 +37,7 @@ def test_basic():
     stmt = tvm.te.schedule.ScheduleOps(s, bounds)
 
     mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([n], stmt))
-    mod = tvm.tir.transform.LoopPartition(False)(mod)
+    mod = tvm.tir.transform.LoopPartition()(mod)
     stmt = tvm.tir.transform.Simplify()(mod)["main"].body
 
     assert(not any(
@@ -59,8 +59,11 @@ def test_const_loop():
     stmt = tvm.te.schedule.ScheduleOps(s, bounds)
 
     mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([], stmt))
-    mod = tvm.tir.transform.LoopPartition(True)(mod)
-    stmt = tvm.tir.transform.Simplify()(mod)["main"].body
+    with tvm.transform.PassContext(config={
+        "tir.LoopPartition": {"split_const_loop": True}
+    }):
+        mod = tvm.tir.transform.LoopPartition()(mod)
+        stmt = tvm.tir.transform.Simplify()(mod)["main"].body
 
     assert(not any(collect_visit(stmt, lambda x: isinstance(x, tvm.tir.IfThenElse))))
 
@@ -78,7 +81,7 @@ def test_multi_loop():
     stmt = ib.get()
 
     mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([n, m], stmt))
-    mod = tvm.tir.transform.LoopPartition(False)(mod)
+    mod = tvm.tir.transform.LoopPartition()(mod)
     stmt = tvm.tir.transform.Simplify()(mod)["main"].body
 
     assert(not any(collect_visit(stmt.body[0], lambda x: isinstance(x, tvm.tir.IfThenElse))))
@@ -101,7 +104,7 @@ def test_multi_if():
     stmt = ib.get()
 
     mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([], stmt))
-    mod = tvm.tir.transform.LoopPartition(False)(mod)
+    mod = tvm.tir.transform.LoopPartition()(mod)
     stmt = tvm.tir.transform.Simplify()(mod)["main"].body
 
     assert(not any(
@@ -125,7 +128,7 @@ def test_thread_axis():
     stmt = tvm.te.schedule.ScheduleOps(s, bounds)
 
     mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([], stmt))
-    mod = tvm.tir.transform.LoopPartition(False)(mod)
+    mod = tvm.tir.transform.LoopPartition()(mod)
     stmt = tvm.tir.transform.Simplify()(mod)["main"].body
 
     assert(not any(
@@ -166,7 +169,7 @@ def test_condition():
     stmt = ib.get()
 
     mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([m, n], stmt))
-    mod = tvm.tir.transform.LoopPartition(False)(mod)
+    mod = tvm.tir.transform.LoopPartition()(mod)
     stmt = tvm.tir.transform.Simplify()(mod)["main"].body
 
     assert(not any(collect_visit(stmt[0], lambda x: isinstance(x, tvm.tir.Select))))
@@ -182,8 +185,11 @@ def test_condition_EQ():
     stmt = ib.get()
 
     mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([m, n], stmt))
-    mod = tvm.tir.transform.LoopPartition(True)(mod)
-    stmt = tvm.tir.transform.Simplify()(mod)["main"].body
+    with tvm.transform.PassContext(config={
+        "tir.LoopPartition": {"split_const_loop": True}
+    }):
+        mod = tvm.tir.transform.LoopPartition()(mod)
+        stmt = tvm.tir.transform.Simplify()(mod)["main"].body
 
     assert(not any(collect_visit(stmt[0], lambda x: isinstance(x, tvm.tir.Select))))
 
@@ -237,8 +243,12 @@ def test_single_likely():
     stmt = tvm.te.schedule.ScheduleOps(s, bounds)
 
     mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([], stmt))
-    mod = tvm.tir.transform.LoopPartition(True)(mod)
-    stmt = tvm.tir.transform.Simplify()(mod)["main"].body
+
+    with tvm.transform.PassContext(config={
+        "tir.LoopPartition": {"split_const_loop": True}
+    }):
+        mod = tvm.tir.transform.LoopPartition()(mod)
+        stmt = tvm.tir.transform.Simplify()(mod)["main"].body
 
     assert(not any(collect_visit(stmt, lambda x: isinstance(x, tvm.tir.IfThenElse))))
 
@@ -261,8 +271,12 @@ def test_multi_likely():
     stmt = tvm.te.schedule.ScheduleOps(s, bounds)
 
     mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([], stmt))
-    mod = tvm.tir.transform.LoopPartition(True)(mod)
-    stmt = tvm.tir.transform.Simplify()(mod)["main"].body
+
+    with tvm.transform.PassContext(config={
+        "tir.LoopPartition": {"split_const_loop": True}
+    }):
+        mod = tvm.tir.transform.LoopPartition()(mod)
+        stmt = tvm.tir.transform.Simplify()(mod)["main"].body
 
     assert(not any(collect_visit(stmt, lambda x: isinstance(x, tvm.tir.IfThenElse))))
 
@@ -292,8 +306,12 @@ def test_oneD_pool():
     stmt = ib.get()
 
     mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([m, data, out], stmt))
-    mod = tvm.tir.transform.LoopPartition(True)(mod)
-    stmt = tvm.tir.transform.Simplify()(mod)["main"].body
+
+    with tvm.transform.PassContext(config={
+        "tir.LoopPartition": {"split_const_loop": True}
+    }):
+        mod = tvm.tir.transform.LoopPartition()(mod)
+        stmt = tvm.tir.transform.Simplify()(mod)["main"].body
 
     assert(not any(collect_visit(stmt, lambda x: isinstance(x, tvm.tir.IfThenElse))))
 
@@ -317,6 +335,7 @@ def test_cce_loop_1():
   stmt = ib.get()
 
   mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([Ab, Bb], stmt))
+
   mod = tvm.tir.transform.LoopPartition(True)(mod)
   stmt = tvm.tir.transform.Simplify()(mod)["main"].body
 

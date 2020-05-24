@@ -138,20 +138,15 @@ def LiftAttrScope(attr_key):
     return _ffi_api.LiftAttrScope(attr_key)
 
 
-def LoopPartition(split_const_loop):
+def LoopPartition():
     """Inject virtual thread loops.
-
-    Parameters
-    ----------
-    split_const_loop : bool
-        Flag to enable partition for const loop.
 
     Returns
     -------
     fpass : tvm.transform.Pass
         The result pass
     """
-    return _ffi_api.LoopPartition(split_const_loop)
+    return _ffi_api.LoopPartition()
 
 
 def VectorizeLoop(enable_vectorize=True):

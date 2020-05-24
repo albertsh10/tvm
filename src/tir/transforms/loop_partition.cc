@@ -37,6 +37,25 @@
 namespace tvm {
 namespace tir {
 
+struct LoopPartitionConfigNode : public tvm::AttrsNode<LoopPartitionConfigNode> {
+  bool split_const_loop;
+
+  TVM_DECLARE_ATTRS(LoopPartitionConfigNode, "tir.transform.LoopPartitionConfig") {
+    TVM_ATTR_FIELD(split_const_loop)
+        .describe("Split constant loop")
+        .set_default(false);
+  }
+};
+
+class LoopPartitionConfig : public Attrs {
+ public:
+  TVM_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(
+      LoopPartitionConfig, Attrs, LoopPartitionConfigNode);
+};
+
+TVM_REGISTER_NODE_TYPE(LoopPartitionConfigNode);
+TVM_REGISTER_PASS_CONFIG_OPTION("tir.LoopPartition", LoopPartitionConfig);
+
 using arith::DeduceBound;
 using arith::Intersect;
 using arith::IntSet;
@@ -595,10 +614,14 @@ Stmt LoopPartition(Stmt stmt, bool split_const_loop) {
 
 namespace transform {
 
-Pass LoopPartition(bool split_const_loop) {
+Pass LoopPartition() {
   auto pass_func = [=](PrimFunc f, IRModule m, PassContext ctx) {
     auto* n = f.CopyOnWrite();
-    n->body = LoopPartition(std::move(n->body), split_const_loop);
+    auto cfg = ctx->GetConfig<LoopPartitionConfig>("tir.LoopPartition");
+    if (!cfg.defined()) {
+      cfg = AttrsWithDefaultValues<LoopPartitionConfig>();
+    }
+    n->body = LoopPartition(std::move(n->body), cfg.value()->split_const_loop);
     return f;
   };
   return CreatePrimFuncPass(pass_func, 0, "tir.LoopPartition", {});

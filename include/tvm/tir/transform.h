@@ -108,11 +108,9 @@ TVM_DLL Pass LiftAttrScope(std::string attr_key);
 /*!
  * \brief partition loops in the stmt.
  *
- * \param split_const_loop flag to enable partition for const loop
- *
  * \return The pass.
  */
-TVM_DLL Pass LoopPartition(bool split_const_loop);
+TVM_DLL Pass LoopPartition();
 
 /*!
  * \brief Lower vectorization loops.
