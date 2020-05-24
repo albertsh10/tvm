@@ -28,6 +28,7 @@
 #include <tvm/target/codegen.h>
 #include <tvm/te/operation.h>
 #include <tvm/tir/analysis.h>
+#include <tvm/ir/transform.h>
 #include <tvm/tir/transform.h>
 
 #include <algorithm>
@@ -35,6 +36,15 @@
 #include <stack>
 
 namespace tvm {
+
+// Register build pipeline related options
+TVM_REGISTER_PASS_CONFIG_OPTION("tir.noalias", Bool);
+TVM_REGISTER_PASS_CONFIG_OPTION("tir.detect_global_barrier", Bool);
+TVM_REGISTER_PASS_CONFIG_OPTION("tir.instrument_bound_checkers", Bool);
+TVM_REGISTER_PASS_CONFIG_OPTION("tir.disable_assert", Bool);
+TVM_REGISTER_PASS_CONFIG_OPTION("tir.disable_vectorize", Bool);
+TVM_REGISTER_PASS_CONFIG_OPTION("tir.add_lower_pass", Array<Array<ObjectRef>>);
+
 
 using runtime::PackedFunc;
 using runtime::TVMArgs;
@@ -119,16 +129,11 @@ transform::Pass Filter(FCond fcond) {
   return tir::transform::CreatePrimFuncPass(fpass, 0, "Filter", {});
 }
 
-
-// R5Begister build pipeline related options
-TVM_REGISTER_PASS_CONFIG_OPTION("tir.noalias", Bool::ContainerType);
-TVM_REGISTER_PASS_CONFIG_OPTION("tir.instrument_bound_checkers", Bool::ContainerType);
-
-
 IRModule lower(te::Schedule sch, const Array<te::Tensor>& args, const std::string& name,
                const std::unordered_map<te::Tensor, tir::Buffer>& binds,
                const BuildConfig& config) {
   Array<ObjectRef> out_arg_list;
+  auto pass_ctx = transform::PassContext::Current();
 
   sch = sch.normalize();
 
@@ -143,8 +148,14 @@ IRModule lower(te::Schedule sch, const Array<te::Tensor>& args, const std::strin
   // build the function
   tir::PrimFunc f = te::SchedulePostProcToPrimFunc(out_arg_list, std::move(stmt), out_binds);
   f = WithAttr(std::move(f), "global_symbol", runtime::String(name));
-  if (config->restricted_func) {
-    f = WithAttr(std::move(f), "tir.noalias", Integer(1));
+
+  bool noalias = pass_ctx->GetConfig<Bool>("tir.noalias", Bool(true)).value();
+  bool disable_vectorize = pass_ctx->GetConfig<Bool>("tir.disable_vectorize", Bool(false)).value();
+  bool instrument_bound_checkers = pass_ctx->GetConfig<Bool>(
+      "tir.instrument_bound_checkers", Bool(false)).value();
+
+  if (noalias) {
+    f = WithAttr(std::move(f), "tir.noalias", Bool(true));
   }
 
   auto mod = IRModule(Map<GlobalVar, BaseFunc>({{GlobalVar(name), f}}));
@@ -152,12 +163,12 @@ IRModule lower(te::Schedule sch, const Array<te::Tensor>& args, const std::strin
 
   // Phase 0
   pass_list.push_back(tir::transform::InjectPrefetch());
-  pass_list.push_back(tir::transform::StorageFlatten(64, config->instrument_bound_checkers));
+  pass_list.push_back(tir::transform::StorageFlatten(64, instrument_bound_checkers));
   // Phase 1
   pass_list.push_back(tir::transform::NarrowDataType(32));
   pass_list.push_back(tir::transform::Simplify());
   pass_list.push_back(tir::transform::LoopPartition(config->partition_const_loop));
-  pass_list.push_back(tir::transform::VectorizeLoop(!config->disable_vectorize));
+  pass_list.push_back(tir::transform::VectorizeLoop(!disable_vectorize));
   pass_list.push_back(tir::transform::InjectVirtualThread());
   pass_list.push_back(tir::transform::InjectDoubleBuffer(config->double_buffer_split_loop));
   pass_list.push_back(tir::transform::StorageRewrite());
@@ -165,10 +176,8 @@ IRModule lower(te::Schedule sch, const Array<te::Tensor>& args, const std::strin
   // Phase 2
   pass_list.push_back(tir::transform::Simplify());
   pass_list.push_back(tir::transform::RemoveNoOp());
-  if (!(config->disable_select_rewriting)) {
-    pass_list.push_back(tir::transform::RewriteUnsafeSelect());
-  }
-  if (config->instrument_bound_checkers) {
+  pass_list.push_back(tir::transform::RewriteUnsafeSelect());
+  if (instrument_bound_checkers) {
     pass_list.push_back(tir::transform::InstrumentBoundCheckers());
   }
   // run
@@ -177,12 +186,13 @@ IRModule lower(te::Schedule sch, const Array<te::Tensor>& args, const std::strin
   return mod;
 }
 
-std::pair<IRModule, IRModule> split_dev_host_funcs(IRModule mod_mixed, const Target& target,
-                                                   const Target& target_host,
-                                                   const BuildConfig& config) {
+std::pair<IRModule, IRModule> SplitDevHostFuncs(IRModule mod_mixed, const Target& target,
+                                                const Target& target_host,
+                                                const transform::PassContext& pass_ctx) {
   Array<tvm::transform::Pass> mixed_pass_list = {BindTarget(target),
                                                  tir::transform::VerifyMemory()};
-  if (config->detect_global_barrier) {
+
+  if (pass_ctx->GetConfig<Bool>("tir.detect_global_barrier", Bool(false)).value()) {
     mixed_pass_list.push_back(tir::transform::ThreadSync("global"));
   }
   mixed_pass_list.push_back(tir::transform::ThreadSync("shared"));
@@ -243,8 +253,9 @@ std::pair<IRModule, IRModule> split_dev_host_funcs(IRModule mod_mixed, const Tar
 // Build for heterogeneous execution.
 runtime::Module build(const Map<Target, IRModule>& inputs, const Target& target_host,
                       const BuildConfig& config) {
-  std::vector<runtime::Module> device_modules;
+  auto pass_ctx = transform::PassContext::Current();
 
+  std::vector<runtime::Module> device_modules;
   Target target_host_val = target_host;
   if (!target_host.defined()) {
     for (const auto& it : inputs) {
@@ -262,7 +273,7 @@ runtime::Module build(const Map<Target, IRModule>& inputs, const Target& target_
   IRModule mhost_all = IRModule(Map<GlobalVar, BaseFunc>());
 
   for (const auto& it : inputs) {
-    auto pair = split_dev_host_funcs(it.second, it.first, target_host_val, config);
+    auto pair = SplitDevHostFuncs(it.second, it.first, target_host_val, pass_ctx);
     auto& mhost = pair.first;
     auto& mdevice = pair.second;
 

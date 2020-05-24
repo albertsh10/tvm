@@ -68,7 +68,7 @@ class UnrollLoopConfig : public Attrs {
 };
 
 TVM_REGISTER_NODE_TYPE(UnrollLoopConfigNode);
-TVM_REGISTER_PASS_CONFIG_OPTION("tir.UnrollLoop", UnrollLoopConfigNode);
+TVM_REGISTER_PASS_CONFIG_OPTION("tir.UnrollLoop", UnrollLoopConfig);
 
 class LoopUnroller : public StmtExprMutator {
  public:

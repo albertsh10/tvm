@@ -183,39 +183,12 @@ class BuildConfigNode : public Object {
    */
   int double_buffer_split_loop = 1;
 
-  /*! \brief Set to true if buffer arguments do not overlap. This enables more optimization. */
-  bool restricted_func = true;
-
-  /*! \brief Whether to detect global barrier */
-  bool detect_global_barrier = false;
-
   /*! \brief Whether to partition const loop */
   bool partition_const_loop = false;
 
-  /*! \brief List of passes to be injected into the low-level pipeline. */
-  std::vector<std::pair<int, transform::Pass>> add_lower_pass;
-
-  /*! \brief Whether to instrument loads and stores with check for out of the bounds. */
-  bool instrument_bound_checkers = false;
-
-  /*! \brief Whether to disable select rewriting. */
-  bool disable_select_rewriting = false;
-
-  /*! \brief Whether to disable loop vectorization. */
-  bool disable_vectorize = false;
-
-  /*! \brief Whether to disable assert stmt generation. */
-  bool disable_assert = false;
-
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("double_buffer_split_loop", &double_buffer_split_loop);
-    v->Visit("restricted_func", &restricted_func);
-    v->Visit("detect_global_barrier", &detect_global_barrier);
     v->Visit("partition_const_loop", &partition_const_loop);
-    v->Visit("instrument_bound_checkers", &instrument_bound_checkers);
-    v->Visit("disable_select_rewriting", &disable_select_rewriting);
-    v->Visit("disable_vectorize", &disable_vectorize);
-    v->Visit("disable_assert", &disable_assert);
   }
 
   static constexpr const char* _type_key = "BuildConfig";
