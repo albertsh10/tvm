@@ -183,11 +183,7 @@ def lower(sch,
         tvm.tir.transform.InjectVirtualThread(),
         tvm.tir.transform.InjectDoubleBuffer(cfg.double_buffer_split_loop),
         tvm.tir.transform.StorageRewrite(),
-        tvm.tir.transform.UnrollLoop(
-            cfg.auto_unroll_max_step,
-            cfg.auto_unroll_max_depth,
-            cfg.auto_unroll_max_extent,
-            cfg.unroll_explicit),
+        tvm.tir.transform.UnrollLoop()
     ]
     pass_list += lower_phase2
 

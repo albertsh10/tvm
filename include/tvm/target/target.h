@@ -182,17 +182,6 @@ class BuildConfigNode : public Object {
    * done. Otherwise, a split will be done with this factor and the inner loop will be unrolled.
    */
   int double_buffer_split_loop = 1;
-  /*! \brief Threshold of number of steps in the loop to be automatically unrolled */
-  int auto_unroll_max_step = 0;
-  /*! \brief The maximum nested level of loops that can be automatically unrolled */
-  int auto_unroll_max_depth = 8;
-  /*! \brief The maximum extent of loop that will be unrolled */
-  int auto_unroll_max_extent = 0;
-  /*!
-   * \brief Whether to explicitly unroll the loop. If set to false, the unroll hint will
-   * be passed to the CodeGen phase. Set to true if CodeGen supports unroll pragma.
-   */
-  bool unroll_explicit = true;
 
   /*! \brief Set to true if buffer arguments do not overlap. This enables more optimization. */
   bool restricted_func = true;
@@ -220,10 +209,6 @@ class BuildConfigNode : public Object {
 
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("double_buffer_split_loop", &double_buffer_split_loop);
-    v->Visit("auto_unroll_max_step", &auto_unroll_max_step);
-    v->Visit("auto_unroll_max_depth", &auto_unroll_max_depth);
-    v->Visit("auto_unroll_max_extent", &auto_unroll_max_extent);
-    v->Visit("unroll_explicit", &unroll_explicit);
     v->Visit("restricted_func", &restricted_func);
     v->Visit("detect_global_barrier", &detect_global_barrier);
     v->Visit("partition_const_loop", &partition_const_loop);
