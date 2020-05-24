@@ -23,12 +23,12 @@
  */
 #include <dmlc/thread_local.h>
 #include <tvm/driver/driver_api.h>
+#include <tvm/ir/transform.h>
 #include <tvm/runtime/container.h>
 #include <tvm/runtime/registry.h>
 #include <tvm/target/codegen.h>
 #include <tvm/te/operation.h>
 #include <tvm/tir/analysis.h>
-#include <tvm/ir/transform.h>
 #include <tvm/tir/transform.h>
 
 #include <algorithm>
@@ -44,7 +44,6 @@ TVM_REGISTER_PASS_CONFIG_OPTION("tir.instrument_bound_checkers", Bool);
 TVM_REGISTER_PASS_CONFIG_OPTION("tir.disable_assert", Bool);
 TVM_REGISTER_PASS_CONFIG_OPTION("tir.disable_vectorize", Bool);
 TVM_REGISTER_PASS_CONFIG_OPTION("tir.add_lower_pass", Array<Array<ObjectRef>>);
-
 
 using runtime::PackedFunc;
 using runtime::TVMArgs;
@@ -149,8 +148,8 @@ IRModule lower(te::Schedule sch, const Array<te::Tensor>& args, const std::strin
 
   bool noalias = pass_ctx->GetConfig<Bool>("tir.noalias", Bool(true)).value();
   bool disable_vectorize = pass_ctx->GetConfig<Bool>("tir.disable_vectorize", Bool(false)).value();
-  bool instrument_bound_checkers = pass_ctx->GetConfig<Bool>(
-      "tir.instrument_bound_checkers", Bool(false)).value();
+  bool instrument_bound_checkers =
+      pass_ctx->GetConfig<Bool>("tir.instrument_bound_checkers", Bool(false)).value();
 
   if (noalias) {
     f = WithAttr(std::move(f), "tir.noalias", Bool(true));

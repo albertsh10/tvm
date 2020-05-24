@@ -41,16 +41,13 @@ struct LoopPartitionConfigNode : public tvm::AttrsNode<LoopPartitionConfigNode> 
   bool partition_const_loop;
 
   TVM_DECLARE_ATTRS(LoopPartitionConfigNode, "tir.transform.LoopPartitionConfig") {
-    TVM_ATTR_FIELD(partition_const_loop)
-        .describe("Split constant loop")
-        .set_default(false);
+    TVM_ATTR_FIELD(partition_const_loop).describe("Split constant loop").set_default(false);
   }
 };
 
 class LoopPartitionConfig : public Attrs {
  public:
-  TVM_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(
-      LoopPartitionConfig, Attrs, LoopPartitionConfigNode);
+  TVM_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(LoopPartitionConfig, Attrs, LoopPartitionConfigNode);
 };
 
 TVM_REGISTER_NODE_TYPE(LoopPartitionConfigNode);
@@ -93,7 +90,8 @@ bool ExprUseVars(PrimExpr expr, const std::unordered_set<const VarNode*>& vars) 
 class CandidateSelector final : public StmtExprVisitor {
  public:
   using VarIsUsed = bool;
-  explicit CandidateSelector(bool partition_const_loop) : partition_const_loop_(partition_const_loop) {}
+  explicit CandidateSelector(bool partition_const_loop)
+      : partition_const_loop_(partition_const_loop) {}
 
   void VisitStmt_(const ForNode* op) final {
     // partition const loop when sets partition_const_loop_
@@ -326,7 +324,8 @@ class ThreadPartitionInserter : public StmtMutator {
 // likely conditions
 class LoopPartitioner : public StmtMutator {
  public:
-  explicit LoopPartitioner(bool partition_const_loop) : selector(CandidateSelector(partition_const_loop)) {}
+  explicit LoopPartitioner(bool partition_const_loop)
+      : selector(CandidateSelector(partition_const_loop)) {}
 
   Stmt VisitAndMutate(Stmt stmt) {
     selector(stmt);

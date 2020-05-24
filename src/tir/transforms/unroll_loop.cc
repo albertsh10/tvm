@@ -63,8 +63,7 @@ struct UnrollLoopConfigNode : public tvm::AttrsNode<UnrollLoopConfigNode> {
 
 class UnrollLoopConfig : public Attrs {
  public:
-  TVM_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(
-      UnrollLoopConfig, Attrs, UnrollLoopConfigNode);
+  TVM_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(UnrollLoopConfig, Attrs, UnrollLoopConfigNode);
 };
 
 TVM_REGISTER_NODE_TYPE(UnrollLoopConfigNode);
@@ -211,8 +210,8 @@ class LoopUnroller : public StmtExprMutator {
 };
 
 Stmt UnrollLoop(Stmt stmt, UnrollLoopConfig cfg) {
-  Stmt ret = LoopUnroller(
-      cfg->auto_max_step, cfg->auto_max_depth, cfg->auto_max_extent, cfg->explicit_unroll)(stmt);
+  Stmt ret = LoopUnroller(cfg->auto_max_step, cfg->auto_max_depth, cfg->auto_max_extent,
+                          cfg->explicit_unroll)(stmt);
   if (!ret.same_as(stmt)) {
     return ConvertSSA(ret);
   } else {

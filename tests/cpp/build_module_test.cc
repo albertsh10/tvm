@@ -105,7 +105,6 @@ TEST(BuildModule, Heterogeneous) {
   With<Target> llvm_scope(target_llvm);
   auto s2 = create_schedule({elemwise_sub->op});
 
-
   auto args1 = Array<Tensor>({A, B, elemwise_add});
   auto args2 = Array<Tensor>({copy, C, elemwise_sub});
 

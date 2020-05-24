@@ -36,21 +36,18 @@ struct InjectDoubleBufferConfigNode : public tvm::AttrsNode<InjectDoubleBufferCo
   int split_loop;
 
   TVM_DECLARE_ATTRS(InjectDoubleBufferConfigNode, "tir.transform.InjectDoubleBufferConfig") {
-    TVM_ATTR_FIELD(split_loop)
-        .describe("Split loop factors")
-        .set_default(1);
+    TVM_ATTR_FIELD(split_loop).describe("Split loop factors").set_default(1);
   }
 };
 
 class InjectDoubleBufferConfig : public Attrs {
  public:
-  TVM_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(
-      InjectDoubleBufferConfig, Attrs, InjectDoubleBufferConfigNode);
+  TVM_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(InjectDoubleBufferConfig, Attrs,
+                                            InjectDoubleBufferConfigNode);
 };
 
 TVM_REGISTER_NODE_TYPE(InjectDoubleBufferConfigNode);
 TVM_REGISTER_PASS_CONFIG_OPTION("tir.InjectDoubleBuffer", InjectDoubleBufferConfig);
-
 
 // Detect double buffer variables.
 class DoubleBufferDetector : public StmtExprVisitor {
