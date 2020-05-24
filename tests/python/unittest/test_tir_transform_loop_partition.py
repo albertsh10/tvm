@@ -223,7 +223,7 @@ def test_everything_during_deduction():
     stmt = ib.get()
 
     mod = tvm.IRModule.from_expr(tvm.tir.PrimFunc([m, n], stmt))
-    mod = tvm.tir.transform.LoopPartition(False)(mod)
+    mod = tvm.tir.transform.LoopPartition()(mod)
     stmt = tvm.tir.transform.Simplify()(mod)["main"].body
 
 
