@@ -182,20 +182,15 @@ def InjectVirtualThread():
     return _ffi_api.InjectVirtualThread()
 
 
-def InjectDoubleBuffer(split_loop_factor):
+def InjectDoubleBuffer():
     """Inject double buffer statements.
-
-    Parameters
-    ----------
-    split_loop_factor : int
-        Loop splitting factor.
 
     Returns
     -------
     fpass : tvm.transform.Pass
         The result pass
     """
-    return _ffi_api.InjectDoubleBuffer(split_loop_factor)
+    return _ffi_api.InjectDoubleBuffer()
 
 
 def StorageRewrite():

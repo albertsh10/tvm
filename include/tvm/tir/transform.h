@@ -133,10 +133,9 @@ TVM_DLL Pass InjectVirtualThread();
 /*!
  * \brief Inject double buffer statements.
  *
- * \param split_loop_factor Loop splitting factor.
  * \return The pass.
  */
-TVM_DLL Pass InjectDoubleBuffer(int split_loop_factor);
+TVM_DLL Pass InjectDoubleBuffer();
 
 /*!
  * \brief Rewrite storage allocation pattern.

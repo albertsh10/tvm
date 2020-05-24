@@ -177,17 +177,11 @@ TVM_DLL Target hexagon(const std::vector<std::string>& options = std::vector<std
  */
 class BuildConfigNode : public Object {
  public:
-  /*!
-   * \brief Splitting factor for loop splitting. If this is set to zero, no splitting will be
-   * done. Otherwise, a split will be done with this factor and the inner loop will be unrolled.
-   */
-  int double_buffer_split_loop = 1;
 
   /*! \brief Whether to partition const loop */
   bool partition_const_loop = false;
 
   void VisitAttrs(AttrVisitor* v) {
-    v->Visit("double_buffer_split_loop", &double_buffer_split_loop);
     v->Visit("partition_const_loop", &partition_const_loop);
   }
 

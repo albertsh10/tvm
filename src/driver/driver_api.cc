@@ -170,7 +170,7 @@ IRModule lower(te::Schedule sch, const Array<te::Tensor>& args, const std::strin
   pass_list.push_back(tir::transform::LoopPartition(config->partition_const_loop));
   pass_list.push_back(tir::transform::VectorizeLoop(!disable_vectorize));
   pass_list.push_back(tir::transform::InjectVirtualThread());
-  pass_list.push_back(tir::transform::InjectDoubleBuffer(config->double_buffer_split_loop));
+  pass_list.push_back(tir::transform::InjectDoubleBuffer());
   pass_list.push_back(tir::transform::StorageRewrite());
   pass_list.push_back(tir::transform::UnrollLoop());
   // Phase 2
