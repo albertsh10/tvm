@@ -34,7 +34,7 @@ import tempfile
 import numpy as np
 
 import tvm._ffi
-import tvm.ir.transform.PassContext
+import tvm.ir.transform
 from tvm import nd, rpc as _rpc, target as _target
 from tvm.error import TVMError
 from tvm.driver import build
