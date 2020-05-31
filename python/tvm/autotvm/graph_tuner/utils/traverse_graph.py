@@ -38,7 +38,7 @@ def expr2graph(expr, target_ops, node_dict, node_list):
     expr : tvm.relay.Expr.Function
         Input relay function expression.
 
-    target_ops: List of relay.op.Op
+    target_ops: List of tvm.ir.Op
         List of target relay ops
 
     node_dict : dictionary from tvm.relay.Expr to int
