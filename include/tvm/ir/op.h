@@ -121,7 +121,7 @@ class OpNode : public RelayExprNode {
     return is_primitive_ != 0;
   }
 
-  static constexpr const char* _type_key = "relay.Op";
+  static constexpr const char* _type_key = "Op";
   TVM_DECLARE_FINAL_OBJECT_INFO(OpNode, RelayExprNode);
 
  private:

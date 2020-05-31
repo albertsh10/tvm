@@ -21,7 +21,7 @@ from . expr import RelayExpr
 from . import _ffi_api
 
 
-@tvm._ffi.register_object("relay.Op")
+@tvm._ffi.register_object("Op")
 class Op(RelayExpr):
     """Primitive operator in the IR."""
     def __init__(self):
