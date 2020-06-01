@@ -157,7 +157,7 @@ def _expr2graph_impl(expr, target_ops, node_dict, node_list):
         elif isinstance(node, Constant):
             node_entry["name"] = "Constant_" + str(node_index)
             node_entry["types"] = [node.checked_type]
-        elif isinstance(node, relay.op.op.Op):
+        elif isinstance(node, tvm.ir.Op):
             return
         else:
             raise RuntimeError("Not supported relay node type in graph tuning: %s"
