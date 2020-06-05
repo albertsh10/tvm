@@ -327,8 +327,6 @@ inline const char* CallType2String(CallNode::CallType t) {
       return "extern_cpp";
     case CallNode::PureExtern:
       return "pure_extern";
-    case CallNode::Halide:
-      return "halide";
     case CallNode::Intrinsic:
       return "intrin";
     case CallNode::PureIntrinsic:
@@ -347,7 +345,7 @@ Doc TIRTextPrinter::VisitExpr_(const CallNode* op) {
   }
   doc << PrintSep(args, Doc::Text(", ")) << ", dtype=" << PrintDType(op->dtype)
       << ", type=" << Doc::StrLiteral(CallType2String(op->call_type))
-      << ", index=" << op->value_index << ")";
+      << ")";
   return doc;
 }
 

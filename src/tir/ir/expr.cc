@@ -270,16 +270,10 @@ bool CallNode::is_vectorizable() const {
   return false;
 }
 
-PrimExpr CallNode::make(DataType dtype, std::string name, Array<PrimExpr> args, CallType call_type,
-                        FunctionRef func, int value_index) {
+PrimExpr CallNode::make(DataType dtype, std::string name, Array<PrimExpr> args,
+                        CallType call_type) {
   for (size_t i = 0; i < args.size(); ++i) {
     CHECK(args[i].defined());
-  }
-
-  if (call_type == Halide) {
-    for (size_t i = 0; i < args.size(); ++i) {
-      CHECK(args[i].dtype().is_int());
-    }
   }
 
   ObjectPtr<CallNode> node = make_object<CallNode>();
@@ -287,8 +281,6 @@ PrimExpr CallNode::make(DataType dtype, std::string name, Array<PrimExpr> args, 
   node->name = std::move(name);
   node->args = std::move(args);
   node->call_type = call_type;
-  node->func = std::move(func);
-  node->value_index = value_index;
   return PrimExpr(node);
 }
 
@@ -402,6 +394,23 @@ TVM_REGISTER_GLOBAL("tir.BufferLoad").set_body_typed([](Buffer buffer, Array<Pri
 });
 
 TVM_REGISTER_NODE_TYPE(BufferLoadNode);
+
+
+ProducerLoad::ProducerLoad(DataProducer producer, Array<PrimExpr> indices) {
+  ObjectPtr<ProducerLoadNode> node = make_object<ProducerLoadNode>();
+  node->dtype = producer->GetDataType();
+  node->producer = std::move(producer);
+  node->indices = std::move(indices);
+  data_ = std::move(node);
+}
+
+TVM_REGISTER_GLOBAL("tir.ProducerLoad")
+    .set_body_typed([](DataProducer producer, Array<PrimExpr> indices) {
+      return ProducerLoad(producer, indices);
+    });
+
+TVM_REGISTER_NODE_TYPE(ProducerLoadNode);
+
 
 TVM_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     .set_dispatch<StringImmNode>([](const ObjectRef& node, ReprPrinter* p) {
@@ -769,8 +778,8 @@ TVM_REGISTER_GLOBAL("tir.Call")
           prim_expr_args.push_back(Downcast<PrimExpr>(it));
         }
       }
-      return CallNode::make(type, name, prim_expr_args, static_cast<CallNode::CallType>(call_type),
-                            func, value_index);
+      return CallNode::make(
+        type, name, prim_expr_args, static_cast<CallNode::CallType>(call_type));
     });
 
 }  // namespace tir
