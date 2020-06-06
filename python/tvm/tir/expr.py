@@ -144,7 +144,7 @@ class ExprOp(object):
     def __invert__(self):
         if _dtype_is_float(self):
             raise RuntimeError("Cannot use ~ operator on float type Expr.")
-        return _ffi_api.Call(self.dtype, "bitwise_not", [self], Call.PureIntrinsic, None, 0)
+        return _ffi_api.Call(self.dtype, "bitwise_not", [self], Call.PureIntrinsic)
 
     def __lt__(self, other):
         return _ffi_api._OpLT(self, other)

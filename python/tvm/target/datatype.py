@@ -136,8 +136,8 @@ def create_lower_func(extern_func_name):
                 dtype += "x" + str(t.lanes)
         if isinstance(op, (_Cast, _FloatImm)):
             return _Call(dtype, extern_func_name, convert([op.value]),
-                         _Call.Extern, None, 0)
+                         _Call.Extern)
         return _Call(dtype, extern_func_name, convert([op.a, op.b]),
-                     _Call.Extern, None, 0)
+                     _Call.Extern)
 
     return lower
