@@ -291,6 +291,13 @@ Doc TIRTextPrinter::VisitExpr_(const BufferLoadNode* op) {
   return doc;
 }
 
+Doc TIRTextPrinter::VisitExpr_(const ProducerLoadNode* op) {
+  // TODO(tvm-team): consider make a better text format for producer.
+  Doc doc;
+  doc << op->producer->GetNameHint() << Print(op->indices);
+  return doc;
+}
+
 Doc TIRTextPrinter::VisitExpr_(const LoadNode* op) {
   Doc doc;
   doc << "(" << PrintDType(op->dtype) << "*)" << Print(op->buffer_var) << "[" << Print(op->index)
