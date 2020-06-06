@@ -767,8 +767,7 @@ TVM_REGISTER_GLOBAL("tir.Load").set_body([](TVMArgs args, TVMRetValue* ret) {
 });
 
 TVM_REGISTER_GLOBAL("tir.Call")
-    .set_body_typed([](DataType type, std::string name, Array<ObjectRef> args, int call_type,
-                       FunctionRef func, int value_index) {
+    .set_body_typed([](DataType type, std::string name, Array<ObjectRef> args, int call_type) {
       Array<PrimExpr> prim_expr_args;
       for (const auto& it : args) {
         CHECK(it->IsInstance<runtime::StringObj>() || it->IsInstance<PrimExprNode>());
