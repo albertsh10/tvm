@@ -123,20 +123,11 @@ TVM_REGISTER_GLOBAL("tir.Store").set_body([](TVMArgs args, TVMRetValue* ret) {
   }
 });
 
-Stmt ProvideNode::make(FunctionRef func, int value_index, PrimExpr value, Array<PrimExpr> args) {
-  CHECK(value_index >= 0 && value_index < func->num_outputs())
-      << "value index output function return value bound";
-  CHECK(value.defined()) << "Provide of undefined value\n";
-
-  for (size_t i = 0; i < args.size(); ++i) {
-    CHECK(args[i].defined()) << "Provide to undefined location\n";
-  }
-
+Stmt ProvideNode::make(DataProducer producer, PrimExpr value, Array<PrimExpr> indices) {
   ObjectPtr<ProvideNode> node = make_object<ProvideNode>();
-  node->func = std::move(func);
-  node->value_index = value_index;
+  node->producer = std::move(producer);
   node->value = std::move(value);
-  node->args = std::move(args);
+  node->indices = std::move(indices);
   return Stmt(node);
 }
 
@@ -160,6 +151,27 @@ Stmt AllocateNode::make(Var buffer_var, DataType dtype, Array<PrimExpr> extents,
   node->body = std::move(body);
   return Stmt(node);
 }
+
+Stmt RealizeNode::make(DataProducer producer, Region bounds, PrimExpr condition, Stmt body) {
+  for (size_t i = 0; i < bounds.size(); ++i) {
+    CHECK(bounds[i]->min.defined());
+    CHECK(bounds[i]->extent.defined());
+    CHECK(bounds[i]->min.dtype().is_scalar());
+    CHECK(bounds[i]->extent.dtype().is_scalar());
+  }
+  CHECK(body.defined());
+  CHECK(condition.defined());
+  CHECK(condition.dtype().is_bool());
+
+  ObjectPtr<RealizeNode> node = make_object<RealizeNode>();
+  node->producer = std::move(producer);
+  node->bounds = std::move(bounds);
+  node->condition = std::move(condition);
+  node->body = std::move(body);
+  return Stmt(node);
+}
+
+TVM_REGISTER_GLOBAL("tir.Realize").set_body_typed(RealizeNode::make);
 
 // overloaded, needs special handling
 // has default args
@@ -191,30 +203,6 @@ Stmt FreeNode::make(Var buffer_var) {
 }
 
 TVM_REGISTER_GLOBAL("tir.Free").set_body_typed(FreeNode::make);
-
-Stmt RealizeNode::make(FunctionRef func, int value_index, DataType dtype, Region bounds,
-                       PrimExpr condition, Stmt body) {
-  for (size_t i = 0; i < bounds.size(); ++i) {
-    CHECK(bounds[i]->min.defined());
-    CHECK(bounds[i]->extent.defined());
-    CHECK(bounds[i]->min.dtype().is_scalar());
-    CHECK(bounds[i]->extent.dtype().is_scalar());
-  }
-  CHECK(body.defined());
-  CHECK(condition.defined());
-  CHECK(condition.dtype().is_bool());
-
-  ObjectPtr<RealizeNode> node = make_object<RealizeNode>();
-  node->func = std::move(func);
-  node->value_index = value_index;
-  node->dtype = dtype;
-  node->bounds = std::move(bounds);
-  node->condition = std::move(condition);
-  node->body = std::move(body);
-  return Stmt(node);
-}
-
-TVM_REGISTER_GLOBAL("tir.Realize").set_body_typed(RealizeNode::make);
 
 Prefetch::Prefetch(Buffer buffer, Array<Range> bounds) {
   data_ = make_object<PrefetchNode>(buffer, bounds);
