@@ -211,7 +211,7 @@ Stmt MakeCrossThreadReduction(const ComputeOpNode* self, const Stage& stage,
   for (size_t idx = 0; idx < size; ++idx) {
     DataType t = reduces[idx]->dtype;
     assigns[idx] = ProvideNode::make(
-        stage->op, idx, LoadNode::make(t, res_handles[idx], 0, const_true(t.lanes())), args);
+        stage->op.output(idx), LoadNode::make(t, res_handles[idx], 0, const_true(t.lanes())), args);
   }
   Stmt assign_body = SeqStmt::Flatten(assigns);
   assign_body = MergeNest(MakeIfNest(output_preds), assign_body);
