@@ -360,7 +360,7 @@ class ProvideNode : public StmtNode {
 
   bool SEqualReduce(const ProvideNode* other, SEqualReducer equal) const {
     return equal(producer, other->producer) &&  equal(value, other->value) &&
-        equal(args, other->args);
+        equal(indices, other->indices);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {

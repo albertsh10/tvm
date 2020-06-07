@@ -267,7 +267,7 @@ Stmt BaseComputeOpNode::BuildRealize(const Stage& stage,
   for (int i = this->num_outputs(); i > 0; --i) {
     Tensor t = stage->op.output(i - 1);
     realize =
-        tir::RealizeNode::make(t->op, t->value_index, t->dtype, bounds, const_true(), realize);
+        tir::RealizeNode::make(t, bounds, const_true(), realize);
     // alignment requirement, only useful for compute
     for (size_t i = 0; i < num_schedulable_dims(); ++i) {
       auto it = stage->iter_var_attrs.find(this->axis[i]);
@@ -312,8 +312,8 @@ void MakeReduction(const ComputeOpNode* op, const Array<Tensor>& tensors, Stmt* 
   Array<PrimExpr> update_value = (*combiner)(lhs, reduce->source);
   for (size_t i = 0; i < size; ++i) {
     Tensor t = tensors[i];
-    inits.emplace_back(ProvideNode::make(t->op, t->value_index, init_value[i], args));
-    provides.emplace_back(ProvideNode::make(t->op, t->value_index, update_value[i], args));
+    inits.emplace_back(ProvideNode::make(t, init_value[i], args));
+    provides.emplace_back(ProvideNode::make(t, update_value[i], args));
   }
   *init = SeqStmt::Flatten(inits);
   *provide = SeqStmt::Flatten(provides);
@@ -328,7 +328,7 @@ Stmt MakeProvide(const ComputeOpNode* op, const Tensor& t) {
   for (IterVar iv : op->axis) {
     args.push_back(iv->var);
   }
-  return ProvideNode::make(t->op, t->value_index, op->body[t->value_index], args);
+  return ProvideNode::make(t, op->body[t->value_index], args);
 }
 
 Stmt MakeComputeStmt(const ComputeOpNode* self, const Stage& stage,
