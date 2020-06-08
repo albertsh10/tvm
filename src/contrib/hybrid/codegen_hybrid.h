@@ -26,6 +26,7 @@
 
 #include <tvm/target/codegen.h>
 #include <tvm/te/schedule.h>
+#include <tvm/te/operation.h>
 #include <tvm/tir/expr.h>
 #include <tvm/tir/stmt_functor.h>
 
@@ -164,12 +165,11 @@ class CodeGenHybrid : public ExprFunctor<void(const PrimExpr&, std::ostream&)>,
   std::string GetVarID(const VarNode* v);
   /*!
    * \brief Get or allocate the ID for the given tensor.
-   * \param func The tensor to allocate a name.
-   * \param value_index The value index of the given tensor.
+   * \param tensor The tensor to allocate a name.
    */
-  std::string GetTensorID(const FunctionRef& func, int value_index);
+  std::string GetTensorID(const Tensor& tensor);
   /*! \brief the storage scope of allocation */
-  std::map<FunctionRef, std::string> alloc_storage_scope_;
+  std::map<Operation, std::string> alloc_storage_scope_;
 };
 
 }  // namespace contrib
