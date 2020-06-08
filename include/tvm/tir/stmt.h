@@ -774,23 +774,6 @@ class Prefetch : public Stmt {
   TVM_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(Prefetch, Stmt, PrefetchNode);
 };
 
-/*!
- * \brief Auxiliary data structure used in IR Pass to indicate a tensor.
- */
-struct TensorKey {
-  FunctionRef f;
-  int value_index;
-
-  inline bool operator==(const TensorKey& other) const {
-    return f == other.f && value_index == other.value_index;
-  }
-  inline std::string GetName() const {
-    if (f->num_outputs() == 1) return f->func_name();
-    std::ostringstream os;
-    os << f->func_name() << ".v" << value_index;
-    return os.str();
-  }
-};
 
 /*! \brief namespace of possible attribute sin AttrStmt.attr_key */
 namespace attr {
@@ -930,17 +913,4 @@ TVM_DLL std::ostream& operator<<(std::ostream& os, ForType for_type);
 
 }  // namespace tir
 }  // namespace tvm
-
-namespace std {
-template <>
-struct hash<::tvm::tir::TensorKey> {
-  std::size_t operator()(const ::tvm::tir::TensorKey& k) const {
-    size_t lhs = ::tvm::ObjectPtrHash()(k.f);
-    size_t rhs = static_cast<size_t>(k.value_index);
-    lhs ^= rhs + 0x9e3779b9 + (lhs << 6) + (lhs >> 2);
-    return lhs;
-  }
-};
-}  // namespace std
-
 #endif  // TVM_TIR_STMT_H_

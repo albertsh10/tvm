@@ -189,11 +189,8 @@ class Provide(Stmt):
 
     Parameters
     ----------
-    func : Operation
-        The operation to create the function.
-
-    value_index : int
-        The output value index
+    producer : DataProducer
+        The data producer.
 
     value : PrimExpr
         The value to be stored.
@@ -201,9 +198,9 @@ class Provide(Stmt):
     args : list of Expr
         The index arguments of the Provide.
     """
-    def __init__(self, func, value_index, value, args):
+    def __init__(self, producer, value, args):
         self.__init_handle_by_constructor__(
-            _ffi_api.Provide, func, value_index, value, args)
+            _ffi_api.Provide, producer, value, args)
 
 
 @tvm._ffi.register_object
@@ -281,14 +278,8 @@ class Realize(Stmt):
 
     Parameters
     ----------
-    func : Operation
-        The operation to create the function.
-
-    value_index : int
-        The output value index
-
-    dtype : str
-        The data type of the operation.
+    producer : DataProducer
+        The data producer.
 
     bounds : list of range
         The bound of realize
@@ -300,15 +291,12 @@ class Realize(Stmt):
         The realize body
     """
     def __init__(self,
-                 func,
-                 value_index,
-                 dtype,
+                 producer,
                  bounds,
                  condition,
                  body):
         self.__init_handle_by_constructor__(
-            _ffi_api.Realize, func, value_index, dtype,
-            bounds, condition, body)
+            _ffi_api.Realize, producer, bounds, condition, body)
 
 
 @tvm._ffi.register_object

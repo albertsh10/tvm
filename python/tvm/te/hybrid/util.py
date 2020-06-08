@@ -75,9 +75,9 @@ def replace_io(body, rmap):
     from tvm.tir import stmt_functor
 
     def replace(op):
-        if isinstance(op, _stmt.Provide) and op.func in rmap.keys():
-            buf = rmap[op.func]
-            return _stmt.Provide(buf.op, op.value_index, op.value, op.args)
+        if isinstance(op, _stmt.Provide) and op.producer.op in rmap.keys():
+            buf = rmap[op.producer.op]
+            return _stmt.Provide(buf, op.value, op.indices)
         if isinstance(op, _expr.ProducerLoad) and  op.producer.op in rmap.keys():
             buf = rmap[op.producer.op]
             return _expr.ProducerLoad(buf, op.indices)
