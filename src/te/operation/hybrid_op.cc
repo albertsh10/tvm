@@ -152,8 +152,7 @@ Stmt HybridOpNode::BuildRealize(const Stage& stage,
     for (size_t i = 0; i < t->shape.size(); ++i) {
       bounds.push_back(Range::make_by_min_extent(make_const(t->shape[i].dtype(), 0), t->shape[i]));
     }
-    realize_body =
-        tir::ProducerRealizeNode::make(t, bounds, const_true(), realize_body);
+    realize_body = tir::ProducerRealizeNode::make(t, bounds, const_true(), realize_body);
   }
   return realize_body;
 }
@@ -464,8 +463,7 @@ class ProviderReplacer : public tir::StmtMutator {
     Tensor t = Downcast<Tensor>(op->producer);
     auto it = vmap_.find(t);
     if (it != vmap_.end()) {
-      Stmt ret =
-          tir::ProducerStoreNode::make(it->second, op->value, op->indices);
+      Stmt ret = tir::ProducerStoreNode::make(it->second, op->value, op->indices);
       found = true;
       return this->VisitStmt(ret);
     }

@@ -266,8 +266,7 @@ Stmt BaseComputeOpNode::BuildRealize(const Stage& stage,
   Stmt realize = body;
   for (int i = this->num_outputs(); i > 0; --i) {
     Tensor t = stage->op.output(i - 1);
-    realize =
-        tir::ProducerRealizeNode::make(t, bounds, const_true(), realize);
+    realize = tir::ProducerRealizeNode::make(t, bounds, const_true(), realize);
     // alignment requirement, only useful for compute
     for (size_t i = 0; i < num_schedulable_dims(); ++i) {
       auto it = stage->iter_var_attrs.find(this->axis[i]);

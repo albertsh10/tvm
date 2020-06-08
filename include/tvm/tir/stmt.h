@@ -359,8 +359,8 @@ class ProducerStoreNode : public StmtNode {
   }
 
   bool SEqualReduce(const ProducerStoreNode* other, SEqualReducer equal) const {
-    return equal(producer, other->producer) &&  equal(value, other->value) &&
-        equal(indices, other->indices);
+    return equal(producer, other->producer) && equal(value, other->value) &&
+           equal(indices, other->indices);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
@@ -374,7 +374,6 @@ class ProducerStoreNode : public StmtNode {
   static constexpr const char* _type_key = "ProducerStore";
   TVM_DECLARE_FINAL_OBJECT_INFO(ProducerStoreNode, StmtNode);
 };
-
 
 /*!
  * \brief Annotate the bounds where the data produced by the producer

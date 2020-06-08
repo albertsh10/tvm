@@ -152,7 +152,8 @@ Stmt AllocateNode::make(Var buffer_var, DataType dtype, Array<PrimExpr> extents,
   return Stmt(node);
 }
 
-Stmt ProducerRealizeNode::make(DataProducer producer, Region bounds, PrimExpr condition, Stmt body) {
+Stmt ProducerRealizeNode::make(DataProducer producer, Region bounds, PrimExpr condition,
+                               Stmt body) {
   for (size_t i = 0; i < bounds.size(); ++i) {
     CHECK(bounds[i]->min.defined());
     CHECK(bounds[i]->extent.defined());

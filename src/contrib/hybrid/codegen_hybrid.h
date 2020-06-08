@@ -25,8 +25,8 @@
 #define TVM_CONTRIB_HYBRID_CODEGEN_HYBRID_H_
 
 #include <tvm/target/codegen.h>
-#include <tvm/te/schedule.h>
 #include <tvm/te/operation.h>
+#include <tvm/te/schedule.h>
 #include <tvm/tir/expr.h>
 #include <tvm/tir/stmt_functor.h>
 
