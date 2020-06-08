@@ -343,7 +343,7 @@ class BufferRealize : public Stmt {
  *
  * \sa DataProducer
  */
-class ProvideNode : public StmtNode {
+class ProducerStoreNode : public StmtNode {
  public:
   /*! \brief The producer to store the results into. */
   DataProducer producer;
@@ -358,7 +358,7 @@ class ProvideNode : public StmtNode {
     v->Visit("indices", &indices);
   }
 
-  bool SEqualReduce(const ProvideNode* other, SEqualReducer equal) const {
+  bool SEqualReduce(const ProducerStoreNode* other, SEqualReducer equal) const {
     return equal(producer, other->producer) &&  equal(value, other->value) &&
         equal(indices, other->indices);
   }
@@ -371,8 +371,8 @@ class ProvideNode : public StmtNode {
 
   TVM_DLL static Stmt make(DataProducer producer, PrimExpr value, Array<PrimExpr> indices);
 
-  static constexpr const char* _type_key = "Provide";
-  TVM_DECLARE_FINAL_OBJECT_INFO(ProvideNode, StmtNode);
+  static constexpr const char* _type_key = "ProducerStore";
+  TVM_DECLARE_FINAL_OBJECT_INFO(ProducerStoreNode, StmtNode);
 };
 
 
@@ -387,7 +387,7 @@ class ProvideNode : public StmtNode {
  *
  * \sa DataProducer
  */
-class RealizeNode : public StmtNode {
+class ProducerRealizeNode : public StmtNode {
  public:
   /*! \brief The producer that produces the data. */
   DataProducer producer;
@@ -407,7 +407,7 @@ class RealizeNode : public StmtNode {
 
   TVM_DLL static Stmt make(DataProducer producer, Region bounds, PrimExpr condition, Stmt body);
 
-  bool SEqualReduce(const RealizeNode* other, SEqualReducer equal) const {
+  bool SEqualReduce(const ProducerRealizeNode* other, SEqualReducer equal) const {
     return equal(producer, other->producer) && equal(bounds, other->bounds) &&
            equal(condition, other->condition) && equal(body, other->body);
   }
@@ -419,8 +419,8 @@ class RealizeNode : public StmtNode {
     hash_reduce(body);
   }
 
-  static constexpr const char* _type_key = "Realize";
-  TVM_DECLARE_FINAL_OBJECT_INFO(RealizeNode, StmtNode);
+  static constexpr const char* _type_key = "ProducerRealize";
+  TVM_DECLARE_FINAL_OBJECT_INFO(ProducerRealizeNode, StmtNode);
 };
 
 /*!

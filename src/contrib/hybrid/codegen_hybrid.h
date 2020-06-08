@@ -120,11 +120,11 @@ class CodeGenHybrid : public ExprFunctor<void(const PrimExpr&, std::ostream&)>,
   // statment
   void VisitStmt_(const LetStmtNode* op) override;
   void VisitStmt_(const StoreNode* op) override;
-  void VisitStmt_(const ProvideNode* op) override;
+  void VisitStmt_(const ProducerStoreNode* op) override;
   void VisitStmt_(const ForNode* op) override;
   void VisitStmt_(const IfThenElseNode* op) override;
   void VisitStmt_(const AllocateNode* op) override;
-  void VisitStmt_(const RealizeNode* op) override;
+  void VisitStmt_(const ProducerRealizeNode* op) override;
   void VisitStmt_(const AttrStmtNode* op) override;
   void VisitStmt_(const AssertStmtNode* op) override;
   void VisitStmt_(const EvaluateNode* op) override;

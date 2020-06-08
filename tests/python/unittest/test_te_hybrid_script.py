@@ -131,7 +131,7 @@ def test_outer_product():
     assert isinstance(jbody.message, tvm.tir.StringImm)
     assert jbody.message.value == "index out of range!"
     jbody = jblock[1]
-    assert isinstance(jbody, tvm.tir.Provide)
+    assert isinstance(jbody, tvm.tir.ProducerStore)
     assert jbody.producer.op.name == 'c'
     assert len(jbody.indices) == 2
     assert jbody.indices[0].name == 'i'
@@ -187,13 +187,13 @@ def test_fanout():
     ibody = ir.body
     assert isinstance(ibody, tvm.tir.AttrStmt)
     abody = ibody.body
-    assert isinstance(abody, tvm.tir.Realize)
+    assert isinstance(abody, tvm.tir.ProducerRealize)
     assert abody.bounds[0].min.value == 0
     assert abody.bounds[0].extent.value == 1
     assert abody.producer.op.name == 'sigma'
     #Check i loop body
     rbody = abody.body
-    assert isinstance(rbody[0], tvm.tir.Provide)
+    assert isinstance(rbody[0], tvm.tir.ProducerStore)
     assert rbody[0].producer.op.name == 'sigma'
     assert len(rbody[0].indices) == 1
     assert rbody[0].indices[0].value == 0
@@ -203,7 +203,7 @@ def test_fanout():
     assert jloop.min.value == 0
     assert jloop.extent.value == 3
     jbody = jloop.body
-    assert isinstance(jbody, tvm.tir.Provide)
+    assert isinstance(jbody, tvm.tir.ProducerStore)
     assert len(jbody.indices) == 1
     assert jbody.indices[0].value == 0
     assert jbody.producer.op.name == 'sigma'
@@ -217,7 +217,7 @@ def test_fanout():
     assert len(value.b.indices) == 1
     assert tvm.ir.structural_equal(value.b.indices[0], ir.loop_var + jloop.loop_var)
     divide= rbody[2]
-    assert isinstance(divide, tvm.tir.Provide)
+    assert isinstance(divide, tvm.tir.ProducerStore)
     assert len(divide.indices) == 1
     assert divide.indices[0].value == 0
     value = divide.value
@@ -227,7 +227,7 @@ def test_fanout():
     assert value.a.indices[0].value == 0
     assert abs(value.b.value - (1 / 3.0)) < 1e-5
     write = rbody[3]
-    assert isinstance(write, tvm.tir.Provide)
+    assert isinstance(write, tvm.tir.ProducerStore)
     assert write.producer.op.name == 'b'
     assert write.value.producer.name == 'sigma'
     assert len(write.value.indices) == 1

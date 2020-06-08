@@ -123,15 +123,15 @@ TVM_REGISTER_GLOBAL("tir.Store").set_body([](TVMArgs args, TVMRetValue* ret) {
   }
 });
 
-Stmt ProvideNode::make(DataProducer producer, PrimExpr value, Array<PrimExpr> indices) {
-  ObjectPtr<ProvideNode> node = make_object<ProvideNode>();
+Stmt ProducerStoreNode::make(DataProducer producer, PrimExpr value, Array<PrimExpr> indices) {
+  ObjectPtr<ProducerStoreNode> node = make_object<ProducerStoreNode>();
   node->producer = std::move(producer);
   node->value = std::move(value);
   node->indices = std::move(indices);
   return Stmt(node);
 }
 
-TVM_REGISTER_GLOBAL("tir.Provide").set_body_typed(ProvideNode::make);
+TVM_REGISTER_GLOBAL("tir.ProducerStore").set_body_typed(ProducerStoreNode::make);
 
 Stmt AllocateNode::make(Var buffer_var, DataType dtype, Array<PrimExpr> extents, PrimExpr condition,
                         Stmt body) {
@@ -152,7 +152,7 @@ Stmt AllocateNode::make(Var buffer_var, DataType dtype, Array<PrimExpr> extents,
   return Stmt(node);
 }
 
-Stmt RealizeNode::make(DataProducer producer, Region bounds, PrimExpr condition, Stmt body) {
+Stmt ProducerRealizeNode::make(DataProducer producer, Region bounds, PrimExpr condition, Stmt body) {
   for (size_t i = 0; i < bounds.size(); ++i) {
     CHECK(bounds[i]->min.defined());
     CHECK(bounds[i]->extent.defined());
@@ -163,7 +163,7 @@ Stmt RealizeNode::make(DataProducer producer, Region bounds, PrimExpr condition,
   CHECK(condition.defined());
   CHECK(condition.dtype().is_bool());
 
-  ObjectPtr<RealizeNode> node = make_object<RealizeNode>();
+  ObjectPtr<ProducerRealizeNode> node = make_object<ProducerRealizeNode>();
   node->producer = std::move(producer);
   node->bounds = std::move(bounds);
   node->condition = std::move(condition);
@@ -171,7 +171,7 @@ Stmt RealizeNode::make(DataProducer producer, Region bounds, PrimExpr condition,
   return Stmt(node);
 }
 
-TVM_REGISTER_GLOBAL("tir.Realize").set_body_typed(RealizeNode::make);
+TVM_REGISTER_GLOBAL("tir.ProducerRealize").set_body_typed(ProducerRealizeNode::make);
 
 // overloaded, needs special handling
 // has default args
@@ -360,8 +360,8 @@ TVM_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     });
 
 TVM_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<ProvideNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const ProvideNode*>(node.get());
+    .set_dispatch<ProducerStoreNode>([](const ObjectRef& node, ReprPrinter* p) {
+      auto* op = static_cast<const ProducerStoreNode*>(node.get());
       p->PrintIndent();
       p->stream << op->producer->GetNameHint() << "[";
       for (size_t i = 0; i < op->indices.size(); ++i) {
@@ -444,8 +444,8 @@ TVM_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     });
 
 TVM_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<RealizeNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const RealizeNode*>(node.get());
+    .set_dispatch<ProducerRealizeNode>([](const ObjectRef& node, ReprPrinter* p) {
+      auto* op = static_cast<const ProducerRealizeNode*>(node.get());
       p->PrintIndent();
       p->stream << "producer_realize " << op->producer->GetNameHint() << "(";
       for (size_t i = 0; i < op->bounds.size(); ++i) {
@@ -562,10 +562,10 @@ TVM_REGISTER_NODE_TYPE(LetStmtNode);
 TVM_REGISTER_NODE_TYPE(AssertStmtNode);
 TVM_REGISTER_NODE_TYPE(ForNode);
 TVM_REGISTER_NODE_TYPE(StoreNode);
-TVM_REGISTER_NODE_TYPE(ProvideNode);
+TVM_REGISTER_NODE_TYPE(ProducerStoreNode);
 TVM_REGISTER_NODE_TYPE(AllocateNode);
 TVM_REGISTER_NODE_TYPE(FreeNode);
-TVM_REGISTER_NODE_TYPE(RealizeNode);
+TVM_REGISTER_NODE_TYPE(ProducerRealizeNode);
 TVM_REGISTER_NODE_TYPE(SeqStmtNode);
 TVM_REGISTER_NODE_TYPE(IfThenElseNode);
 TVM_REGISTER_NODE_TYPE(EvaluateNode);

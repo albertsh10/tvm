@@ -99,7 +99,7 @@ class MMAMatcher : public StmtVisitor {
     }
   }
 
-  void VisitStmt_(const ProvideNode* op) final {
+  void VisitStmt_(const ProducerStoreNode* op) final {
     StmtVisitor::VisitStmt_(op);
     auto it = buf_map_.find(Downcast<Tensor>(op->producer));
     if (it == buf_map_.end()) {
@@ -114,7 +114,7 @@ class MMAMatcher : public StmtVisitor {
     }
   }
 
-  void VisitStmt_(const RealizeNode* op) final {
+  void VisitStmt_(const ProducerRealizeNode* op) final {
     auto key = Downcast<Tensor>(op->producer);
     if (buf_map_.count(key)) {
       if (!buf_map_.at(key).external) {
@@ -174,7 +174,7 @@ class MMAMatcher : public StmtVisitor {
   }
 
   // Do the pattern matching
-  bool mma_sync_match_(const ProvideNode* op, BufferInfo store_buffer) {
+  bool mma_sync_match_(const ProducerStoreNode* op, BufferInfo store_buffer) {
     auto* add = op->value.as<AddNode>();
     if (add == nullptr) {
       return false;
@@ -224,7 +224,7 @@ class MMAMatcher : public StmtVisitor {
 
   std::unordered_map<Tensor, BufferInfo> buf_map_;
   std::unordered_map<const Object*, std::string> storage_scope_;
-  std::unordered_map<const ProvideNode*, Array<PrimExpr>> mma_sync_;
+  std::unordered_map<const ProducerStoreNode*, Array<PrimExpr>> mma_sync_;
   std::unordered_map<const Object*, std::string> buf_name_;
   std::unordered_set<std::string> frag_reg_;
   bool matched_{false};
@@ -360,7 +360,7 @@ class ScheduleAnalyser {
  private:
   std::unordered_map<std::string, std::string> matrix_abc_;
   std::unordered_map<std::string, std::string> matrix_major_;
-  std::unordered_map<const ProvideNode*, Array<PrimExpr>> mma_sync_;
+  std::unordered_map<const ProducerStoreNode*, Array<PrimExpr>> mma_sync_;
   std::unordered_map<const Object*, std::string> buf_name_;
 };
 
@@ -429,7 +429,7 @@ class BufferAnalyser : public StmtExprVisitor {
     }
   }
 
-  void VisitStmt_(const ProvideNode* op) final {
+  void VisitStmt_(const ProducerStoreNode* op) final {
     StmtExprVisitor::VisitStmt_(op);
     auto key = Downcast<Tensor>(op->producer);
     auto it = buf_map_.find(key);
@@ -588,7 +588,7 @@ class BufferAnalyser : public StmtExprVisitor {
     }
   }
 
-  void VisitStmt_(const RealizeNode* op) final {
+  void VisitStmt_(const ProducerRealizeNode* op) final {
     auto key = Downcast<Tensor>(op->producer);
     if (buf_map_.count(key)) {
       CHECK(buf_map_.at(key).external);
@@ -727,8 +727,8 @@ class BufferAnalyser : public StmtExprVisitor {
   std::unordered_map<std::string, std::string> matrix_major_;
   std::unordered_set<std::string> frag_reg_;
   std::unordered_map<std::string, Array<PrimExpr>> strides_;
-  std::unordered_map<const ProvideNode*, PrimExpr> frag_load_;
-  std::unordered_map<const ProvideNode*, PrimExpr> frag_store_;
+  std::unordered_map<const ProducerStoreNode*, PrimExpr> frag_load_;
+  std::unordered_map<const ProducerStoreNode*, PrimExpr> frag_store_;
   std::unordered_map<std::string, int> thread_extent_;
   IndexVisitor index_visitor;
   Tile warp_tile_;
@@ -781,11 +781,11 @@ class TensorCoreIRMutator : public StmtExprMutator {
         warp_tile_(buffer_analyser.warp_tile_),
         warp_threads_y_(buffer_analyser.warp_threads_y_) {}
 
-  Stmt VisitStmt_(const RealizeNode* op) final {
+  Stmt VisitStmt_(const ProducerRealizeNode* op) final {
     auto key = Downcast<Tensor>(op->producer);
     bounds_[key] = op->bounds;
     Stmt stmt = StmtExprMutator::VisitStmt_(op);
-    op = stmt.as<RealizeNode>();
+    op = stmt.as<ProducerRealizeNode>();
     if (op != nullptr) {
       if (!frag_reg_.count(key->GetNameHint())) {
         return stmt;
@@ -803,7 +803,7 @@ class TensorCoreIRMutator : public StmtExprMutator {
       new_bounds.push_back(
           Range::make_by_min_extent(op->bounds[op->bounds.size() - 1]->min, new_extents[1]));
 
-      return RealizeNode::make(op->producer, new_bounds, op->condition, op->body);
+      return ProducerRealizeNode::make(op->producer, new_bounds, op->condition, op->body);
     }
     return stmt;
   }
@@ -827,7 +827,7 @@ class TensorCoreIRMutator : public StmtExprMutator {
     return stmt;
   }
 
-  Stmt VisitStmt_(const ProvideNode* op) final {
+  Stmt VisitStmt_(const ProducerStoreNode* op) final {
     Stmt stmt = StmtExprMutator::VisitStmt_(op);
     auto it = mma_sync_.find(op);
     if (it != mma_sync_.end()) {
@@ -1076,12 +1076,12 @@ class TensorCoreIRMutator : public StmtExprMutator {
 
   std::unordered_map<std::string, std::string> matrix_abc_;
   std::unordered_map<std::string, std::string> matrix_major_;
-  std::unordered_map<const ProvideNode*, Array<PrimExpr>> mma_sync_;
+  std::unordered_map<const ProducerStoreNode*, Array<PrimExpr>> mma_sync_;
   std::unordered_map<std::string, Array<PrimExpr>> strides_;
   std::unordered_set<std::string> frag_reg_;
   std::unordered_map<const VarNode*, unsigned> loop_scaling_;
-  std::unordered_map<const ProvideNode*, PrimExpr> frag_load_;
-  std::unordered_map<const ProvideNode*, PrimExpr> frag_store_;
+  std::unordered_map<const ProducerStoreNode*, PrimExpr> frag_load_;
+  std::unordered_map<const ProducerStoreNode*, PrimExpr> frag_store_;
   std::unordered_map<Tensor, Region> bounds_;
   arith::Analyzer analyzer_;
   Tile warp_tile_;

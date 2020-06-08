@@ -87,12 +87,12 @@ void StmtVisitor::VisitStmt_(const AssertStmtNode* op) {
   this->VisitStmt(op->body);
 }
 
-void StmtVisitor::VisitStmt_(const ProvideNode* op) {
+void StmtVisitor::VisitStmt_(const ProducerStoreNode* op) {
   VisitArray(op->indices, [this](const PrimExpr& e) { this->VisitExpr(e); });
   this->VisitExpr(op->value);
 }
 
-void StmtVisitor::VisitStmt_(const RealizeNode* op) {
+void StmtVisitor::VisitStmt_(const ProducerRealizeNode* op) {
   VisitArray(op->bounds, [this](const Range& r) {
     this->VisitExpr(r->min);
     this->VisitExpr(r->extent);
@@ -261,7 +261,7 @@ Stmt StmtMutator::VisitStmt_(const BufferRealizeNode* op) {
   }
 }
 
-Stmt StmtMutator::VisitStmt_(const ProvideNode* op) {
+Stmt StmtMutator::VisitStmt_(const ProducerStoreNode* op) {
   Array<PrimExpr> indices = Internal::Mutate(this, op->indices);
   PrimExpr value = this->VisitExpr(op->value);
   if (indices.same_as(op->indices) && value.same_as(op->value)) {
@@ -274,7 +274,7 @@ Stmt StmtMutator::VisitStmt_(const ProvideNode* op) {
   }
 }
 
-Stmt StmtMutator::VisitStmt_(const RealizeNode* op) {
+Stmt StmtMutator::VisitStmt_(const ProducerRealizeNode* op) {
   Region bounds = Internal::Mutate(this, op->bounds);
   Stmt body = this->VisitStmt(op->body);
   PrimExpr condition = this->VisitExpr(op->condition);

@@ -309,7 +309,7 @@ void CodeGenHybrid::VisitStmt_(const AttrStmtNode* op) {
   }
 }
 
-void CodeGenHybrid::VisitStmt_(const RealizeNode* op) {
+void CodeGenHybrid::VisitStmt_(const ProducerRealizeNode* op) {
   auto tensor = Downcast<Tensor>(op->producer);
   CHECK(alloc_storage_scope_.count(tensor->op));
   if (!alloc_storage_scope_[tensor->op].empty()) {
@@ -338,7 +338,7 @@ void CodeGenHybrid::VisitStmt_(const AssertStmtNode* op) {
   PrintStmt(op->body);
 }
 
-void CodeGenHybrid::VisitStmt_(const ProvideNode* op) {
+void CodeGenHybrid::VisitStmt_(const ProducerStoreNode* op) {
   auto tensor = Downcast<Tensor>(op->producer);
   PrintIndent();
   stream << GetTensorID(tensor);

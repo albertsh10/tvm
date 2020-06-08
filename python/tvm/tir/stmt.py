@@ -184,8 +184,8 @@ class BufferRealize(Stmt):
 
 
 @tvm._ffi.register_object
-class Provide(Stmt):
-    """Provide node.
+class ProducerStore(Stmt):
+    """ProducerStore node.
 
     Parameters
     ----------
@@ -195,12 +195,12 @@ class Provide(Stmt):
     value : PrimExpr
         The value to be stored.
 
-    args : list of Expr
-        The index arguments of the Provide.
+    indices : list of Expr
+        The index arguments of the store.
     """
-    def __init__(self, producer, value, args):
+    def __init__(self, producer, value, indices):
         self.__init_handle_by_constructor__(
-            _ffi_api.Provide, producer, value, args)
+            _ffi_api.ProducerStore, producer, value, indices)
 
 
 @tvm._ffi.register_object
@@ -273,8 +273,8 @@ class Free(Stmt):
 
 
 @tvm._ffi.register_object
-class Realize(Stmt):
-    """Realize node.
+class ProducerRealize(Stmt):
+    """ProducerRealize node.
 
     Parameters
     ----------
@@ -296,7 +296,7 @@ class Realize(Stmt):
                  condition,
                  body):
         self.__init_handle_by_constructor__(
-            _ffi_api.Realize, producer, bounds, condition, body)
+            _ffi_api.ProducerRealize, producer, bounds, condition, body)
 
 
 @tvm._ffi.register_object

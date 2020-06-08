@@ -278,7 +278,7 @@ class Vectorizer : public StmtExprMutator {
       }
     }
   }
-  Stmt VisitStmt_(const ProvideNode* op) final {
+  Stmt VisitStmt_(const ProducerStoreNode* op) final {
     LOG(FATAL) << "ProducerProvide is cannot appear in a TIR PrimFunc";
     return Stmt();
   }
