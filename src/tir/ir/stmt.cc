@@ -363,15 +363,12 @@ TVM_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     .set_dispatch<ProvideNode>([](const ObjectRef& node, ReprPrinter* p) {
       auto* op = static_cast<const ProvideNode*>(node.get());
       p->PrintIndent();
-      p->stream << op->func->func_name() << "(";
-      for (size_t i = 0; i < op->args.size(); ++i) {
-        p->Print(op->args[i]);
-        if (i < op->args.size() - 1) p->stream << ", ";
+      p->stream << op->producer->GetNameHint() << "[";
+      for (size_t i = 0; i < op->indices.size(); ++i) {
+        p->Print(op->indices[i]);
+        if (i < op->indices.size() - 1) p->stream << ", ";
       }
-      p->stream << ")";
-      if (op->func->num_outputs() != 1) {
-        p->stream << ".value[" << op->value_index << "]";
-      }
+      p->stream << "]";
       p->stream << " =";
       p->Print(op->value);
       p->stream << '\n';
@@ -450,7 +447,7 @@ TVM_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     .set_dispatch<RealizeNode>([](const ObjectRef& node, ReprPrinter* p) {
       auto* op = static_cast<const RealizeNode*>(node.get());
       p->PrintIndent();
-      p->stream << "realize " << op->func->func_name() << "(";
+      p->stream << "producer_realize " << op->producer->GetNameHint() << "(";
       for (size_t i = 0; i < op->bounds.size(); ++i) {
         p->stream << "[";
         p->Print(op->bounds[i]->min);
@@ -460,9 +457,6 @@ TVM_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
         if (i < op->bounds.size() - 1) p->stream << ", ";
       }
       p->stream << ")";
-      if (op->func->num_outputs() != 1) {
-        p->stream << ".value[" << op->value_index << "]";
-      }
       if (!is_one(op->condition)) {
         p->stream << " if ";
         p->Print(op->condition);

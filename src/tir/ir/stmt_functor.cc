@@ -88,7 +88,7 @@ void StmtVisitor::VisitStmt_(const AssertStmtNode* op) {
 }
 
 void StmtVisitor::VisitStmt_(const ProvideNode* op) {
-  VisitArray(op->args, [this](const PrimExpr& e) { this->VisitExpr(e); });
+  VisitArray(op->indices, [this](const PrimExpr& e) { this->VisitExpr(e); });
   this->VisitExpr(op->value);
 }
 
@@ -262,13 +262,13 @@ Stmt StmtMutator::VisitStmt_(const BufferRealizeNode* op) {
 }
 
 Stmt StmtMutator::VisitStmt_(const ProvideNode* op) {
-  Array<PrimExpr> args = Internal::Mutate(this, op->args);
+  Array<PrimExpr> indices = Internal::Mutate(this, op->indices);
   PrimExpr value = this->VisitExpr(op->value);
-  if (args.same_as(op->args) && value.same_as(op->value)) {
+  if (indices.same_as(op->indices) && value.same_as(op->value)) {
     return GetRef<Stmt>(op);
   } else {
     auto n = CopyOnWrite(op);
-    n->args = std::move(args);
+    n->indices = std::move(indices);
     n->value = std::move(value);
     return Stmt(n);
   }
