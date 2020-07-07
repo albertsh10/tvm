@@ -44,8 +44,8 @@
 //
 
 ci_lint = "tvmai/ci-lint:v0.61"
-ci_gpu = "tvmai/ci-gpu:v0.64"
-ci_cpu = "tvmai/ci-cpu:v0.62"
+ci_gpu = "tvmai/ci-gpu:v0.65-t0"
+ci_cpu = "tvmai/ci-cpu:v0.63-t1"
 ci_wasm = "tvmai/ci-wasm:v0.60"
 ci_i386 = "tvmai/ci-i386:v0.52"
 
